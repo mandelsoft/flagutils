@@ -1,0 +1,46 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+
+	"github.com/mandelsoft/flagutils"
+	"github.com/mandelsoft/flagutils/examples/files"
+	"github.com/mandelsoft/flagutils/output"
+	"github.com/mandelsoft/flagutils/output/tableoutput"
+	"github.com/mandelsoft/flagutils/sort"
+	"github.com/spf13/pflag"
+)
+
+func Error(msg string, args ...interface{}) {
+	fmt.Fprintf(os.Stderr, "Error: "+msg+"\n", args...)
+	os.Exit(1)
+}
+
+func main() {
+	ctx := context.Background()
+	opts := flagutils.DefaultOptionSet{}
+	opts.Add(files.New(), sort.New().AddComparator("name", files.NameComparator), tableoutput.New(), output.New(files.OutputsFactory))
+
+	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	opts.AddFlags(fs)
+
+	err := fs.Parse([]string{"-s", "name", "output", "examples", "-o", "wide"})
+	if err != nil {
+		Error("%s", err)
+	}
+
+	err = flagutils.Validate(ctx, opts, nil)
+	if err != nil {
+		Error("%s", err)
+	}
+
+	args := fs.Args()
+	out := output.From[*files.Element](opts)
+	n, err := out.GetOutput().Process(ctx, args, files.NewSourceFactory(opts))
+	if err != nil {
+		Error("%s", err)
+	}
+	fmt.Printf("processed %d files\n", n)
+}
