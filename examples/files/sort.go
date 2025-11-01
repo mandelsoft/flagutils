@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// NameComparator compares a file system path name.
 func NameComparator(a, b string) int {
 	av := strings.Split(a, string(os.PathSeparator))
 	bv := strings.Split(b, string(os.PathSeparator))

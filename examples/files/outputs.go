@@ -10,7 +10,8 @@ import (
 
 var OutputsFactory = output.NewOutputsFactory[*Element]().
 	Add("", tableoutput.NewOutputFactory[*Element](map_standard, "Name", "Error")).
-	Add("wide", tableoutput.NewOutputFactory[*Element](map_wide, "Mode", "Name", "-Size", "Error"))
+	Add("wide", tableoutput.NewOutputFactory[*Element](map_wide, "Mode", "Name", "-Size", "Error")).
+	AddManifestOutputs()
 
 func map_standard(e *Element) []string {
 	err := ""
@@ -21,21 +22,21 @@ func map_standard(e *Element) []string {
 }
 
 func map_wide(e *Element) []string {
-	error := ""
+	errstr := ""
 	if e.Error != nil {
-		error = e.Error.Error()
+		errstr = e.Error.Error()
 	}
 
 	size := ""
 	mode := ""
-	if error == "" {
+	if errstr == "" {
 		fi, err := os.Stat(e.Path())
 		if err != nil {
-			error = err.Error()
+			errstr = err.Error()
 		} else {
 			size = fmt.Sprintf("%d", fi.Size())
 			mode = fi.Mode().String()
 		}
 	}
-	return []string{mode, e.Path(), size, error}
+	return []string{mode, e.Path(), size, errstr}
 }

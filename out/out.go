@@ -20,6 +20,10 @@ func New(out io.Writer, err io.Writer) *OutputContext {
 	}
 }
 
+func (o *OutputContext) Write(data []byte) (int, error) {
+	return o.Stdout().Write(data)
+}
+
 func (o *OutputContext) Printf(msg string, args ...interface{}) (int, error) {
 	return fmt.Fprintf(o.Stdout(), msg, args...)
 }
@@ -30,6 +34,10 @@ func (o *OutputContext) Print(args ...interface{}) (int, error) {
 
 func (o *OutputContext) Println(args ...interface{}) (int, error) {
 	return fmt.Fprintln(o.Stdout(), args...)
+}
+
+func (o *OutputContext) ErrWrite(data []byte) (int, error) {
+	return o.Stderr().Write(data)
 }
 
 func (o *OutputContext) ErrPrintf(msg string, args ...interface{}) (int, error) {
@@ -79,6 +87,10 @@ func Get(ctx context.Context) *OutputContext {
 	return o.(*OutputContext)
 }
 
+func Write(ctx context.Context, data []byte) (int, error) {
+	return Get(ctx).Write(data)
+}
+
 func Printf(ctx context.Context, msg string, args ...interface{}) (int, error) {
 	return Get(ctx).Printf(msg, args...)
 }
@@ -92,6 +104,10 @@ func Println(ctx context.Context, args ...interface{}) (int, error) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+func ErrWrite(ctx context.Context, data []byte) (int, error) {
+	return Get(ctx).ErrWrite(data)
+}
 
 func ErrPrintf(ctx context.Context, msg string, args ...interface{}) (int, error) {
 	return Get(ctx).ErrPrintf(msg, args...)

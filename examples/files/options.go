@@ -6,7 +6,7 @@ import (
 )
 
 type Options struct {
-	dflag bool
+	dflag bool // do not list directories but show the directories themselves
 }
 
 func From(opts flagutils.OptionSetProvider) *Options {

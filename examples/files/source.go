@@ -30,6 +30,24 @@ func (e *Element) Path() string {
 	return p + string(os.PathSeparator) + e.Name
 }
 
+func (e *Element) AsManifest() any {
+	m := map[string]any{}
+
+	m["name"] = e.Name
+	if e.Error != nil {
+		m["error"] = e.Error.Error()
+	} else {
+		if len(e.History) != 0 {
+			m["path"] = strings.Join(e.History, string(os.PathSeparator))
+		}
+		m["mode"] = e.Fi.Mode().String()
+		m["fileinfo"] = e.Fi.Mode()
+		m["size"] = e.Fi.Size()
+		m["modtime"] = e.Fi.ModTime()
+	}
+	return m
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 type SourceFactory struct {

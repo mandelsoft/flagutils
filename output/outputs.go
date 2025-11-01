@@ -4,18 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/mandelsoft/flagutils"
+	"github.com/mandelsoft/flagutils/output/manifest"
 	"github.com/mandelsoft/goutils/maputils"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
-
-type OutputsFactory[I any] interface {
-	GetModes() []string
-	Add(mode string, out OutputFactory[I]) OutputsFactory[I]
-
-	GetFieldNames(mode string) []string
-	CreateOutput(ctx context.Context, mode string, opts flagutils.OptionSetProvider, v flagutils.ValidationSet) (Output[I], error)
-}
 
 type outputsFactory[I any] struct {
 	modes map[string]OutputFactory[I]
@@ -38,6 +31,10 @@ func (f *outputsFactory[I]) GetModes() []string {
 func (f *outputsFactory[I]) Add(mode string, out OutputFactory[I]) OutputsFactory[I] {
 	f.modes[mode] = out
 	return f
+}
+
+func (f *outputsFactory[I]) AddManifestOutputs() OutputsFactory[I] {
+	return manifest.AddManifestOutputs(f)
 }
 
 func (f *outputsFactory[I]) GetFieldNames(mode string) []string {

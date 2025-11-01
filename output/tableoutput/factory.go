@@ -3,6 +3,7 @@ package tableoutput
 import (
 	"context"
 	"github.com/mandelsoft/flagutils"
+	"github.com/mandelsoft/flagutils/closure"
 	"github.com/mandelsoft/flagutils/output"
 	"github.com/mandelsoft/flagutils/sort"
 	"github.com/mandelsoft/streaming/chain"
@@ -26,6 +27,10 @@ func (o *OutputFactory[I]) GetFieldNames() []string {
 
 func (o *OutputFactory[I]) Create(ctx context.Context, opts flagutils.OptionSetProvider, v flagutils.ValidationSet) (output.Output[I], error) {
 	c := chain.Mapped[I, []string](o.mapper)
+	e := closure.From[I](opts)
+	if e != nil && e.GetExploder() != nil {
+		c = chain.AddChain[[]string](chain.Exploded[I, I](e.GetExploder()), c)
+	}
 	s := sort.From(opts)
 	if s != nil {
 		c = sort.AddSortChain(c, s)
