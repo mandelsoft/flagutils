@@ -3,6 +3,7 @@ package files
 import (
 	"github.com/mandelsoft/flagutils"
 	"github.com/mandelsoft/flagutils/output"
+	"github.com/mandelsoft/flagutils/utils/history"
 	"github.com/mandelsoft/goutils/sliceutils"
 	"iter"
 	"os"
@@ -11,12 +12,12 @@ import (
 
 type Element struct {
 	Name    string
-	History output.History[string]
+	History history.History[string]
 	Error   error
 	Fi      os.FileInfo
 }
 
-func NewElement(name string, hist output.History[string]) *Element {
+func NewElement(name string, hist history.History[string]) *Element {
 	e := &Element{Name: name, History: hist}
 	e.Fi, e.Error = os.Stat(e.Path())
 	return e
@@ -43,7 +44,7 @@ func (e *Element) AsManifest() any {
 		m["mode"] = e.Fi.Mode().String()
 		m["fileinfo"] = e.Fi.Mode()
 		m["size"] = e.Fi.Size()
-		m["modtime"] = e.Fi.ModTime()
+		m["modtime"] = e.Fi.ModTime().UnixNano()
 	}
 	return m
 }

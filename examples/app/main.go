@@ -27,8 +27,8 @@ func main() {
 	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
 	opts.AddFlags(fs)
 
-	//err := fs.Parse([]string{"-c", "-s", "name", "output", "examples", "-o", "wide"})
-	err := fs.Parse([]string{"-c", "output", "examples", "-o", "YAML"})
+	err := fs.Parse([]string{"-c", "-s", "name", "output", "examples", "-o", "wide"})
+	//err := fs.Parse([]string{"-c", "output", "examples", "-o", "YAML"})
 	if err != nil {
 		Error("%s", err)
 	}

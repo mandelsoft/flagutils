@@ -83,15 +83,18 @@ func (o *Options) Validate(ctx context.Context, opts flagutils.OptionSet, v flag
 	return nil
 }
 
-func AddSortChain[I any](c chain.Chain[I, []string], opts *Options) chain.Chain[I, []string] {
+func AddSortChain[I any, F output.FieldProvider](c chain.Chain[I, F], opts *Options) chain.Chain[I, F] {
 	return chain.AddConditional(c,
 		func(context.Context) bool { return opts != nil && len(opts.sortFields) != 0 },
-		chain.Sorted(opts.Compare),
+		chain.Sorted[F](func(a, b F) int { return opts.Compare(a, b) }),
 	)
 }
 
-func (o *Options) Compare(a, b []string) int {
-	for _, f := range o.sortFields {
+func (o *Options) Compare(af, bf output.FieldProvider) int {
+	a := af.GetFields()
+	b := bf.GetFields()
+	for i := range o.sortFields {
+		f := o.sortFields[len(o.sortFields)-i-1]
 		i := slices.Index(o.fields, f)
 		if i >= 0 {
 			cmp := o.comparators[f]

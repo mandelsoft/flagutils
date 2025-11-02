@@ -6,6 +6,18 @@ import (
 	"github.com/mandelsoft/streaming"
 )
 
+type Fields []string
+
+var _ FieldProvider = Fields{}
+
+func (f Fields) GetFields() []string {
+	return f
+}
+
+type FieldProvider interface {
+	GetFields() []string
+}
+
 type FieldNameProvider interface {
 	GetFieldNames() []string
 }
@@ -22,7 +34,6 @@ type OutputFactory[I any] interface {
 }
 
 type Output[I any] interface {
-	FieldNameProvider
 	Process(ctx context.Context, specs ElementSpecs, src streaming.SourceFactory[ElementSpecs, I]) (Result, error)
 }
 

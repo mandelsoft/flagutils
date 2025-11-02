@@ -13,15 +13,15 @@ var OutputsFactory = output.NewOutputsFactory[*Element]().
 	Add("wide", tableoutput.NewOutputFactory[*Element](map_wide, "Mode", "Name", "-Size", "Error")).
 	AddManifestOutputs()
 
-func map_standard(e *Element) []string {
+func map_standard(e *Element) output.FieldProvider {
 	err := ""
 	if e.Error != nil {
 		err = e.Error.Error()
 	}
-	return []string{e.Path(), err}
+	return output.Fields{e.Path(), err}
 }
 
-func map_wide(e *Element) []string {
+func map_wide(e *Element) output.FieldProvider {
 	errstr := ""
 	if e.Error != nil {
 		errstr = e.Error.Error()
@@ -38,5 +38,5 @@ func map_wide(e *Element) []string {
 			mode = fi.Mode().String()
 		}
 	}
-	return []string{mode, e.Path(), size, errstr}
+	return output.Fields{mode, e.Path(), size, errstr}
 }

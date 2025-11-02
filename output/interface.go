@@ -4,7 +4,10 @@ import (
 	"github.com/mandelsoft/flagutils/output/internal"
 )
 
+type Fields = internal.Fields
+
 type FieldNameProvider = internal.FieldNameProvider
+type FieldProvider = internal.FieldProvider
 type ElementSpecs = internal.ElementSpecs
 type Result = internal.Result
 

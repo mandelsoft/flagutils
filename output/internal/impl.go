@@ -4,8 +4,6 @@ import (
 	"context"
 	"github.com/mandelsoft/streaming"
 	"github.com/mandelsoft/streaming/chain"
-	"slices"
-	"strings"
 )
 
 type DefaultOutput[I, O any] struct {
@@ -18,16 +16,6 @@ var _ Output[string] = (*DefaultOutput[string, []string])(nil)
 
 func NewOutput[I, O any](chain chain.Chain[I, O], processor streaming.ProcessorFactory[ElementSpecs, Result, O]) *DefaultOutput[I, O] {
 	return &DefaultOutput[I, O]{nil, chain, processor}
-}
-
-func (o *DefaultOutput[I, O]) GetFieldNames() []string {
-	fields := slices.Clone(o.fieldNames)
-	for i := range fields {
-		if strings.HasPrefix(fields[i], "-") {
-			fields[i] = fields[i][1:]
-		}
-	}
-	return fields
 }
 
 func (o *DefaultOutput[I, O]) GetChain() chain.Chain[I, O] {

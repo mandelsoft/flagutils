@@ -6,6 +6,7 @@ import (
 	"github.com/mandelsoft/flagutils/out"
 	"github.com/mandelsoft/flagutils/output"
 	"github.com/mandelsoft/goutils/iterutils"
+	"github.com/mandelsoft/goutils/sliceutils"
 	"github.com/mandelsoft/streaming"
 	"iter"
 	"strings"
@@ -16,9 +17,9 @@ type Factory struct {
 	Options *Options
 }
 
-var _ streaming.ProcessorFactory[output.ElementSpecs, int, []string] = (*Factory)(nil)
+var _ streaming.ProcessorFactory[output.ElementSpecs, int, FieldProvider] = (*Factory)(nil)
 
-func (o *Factory) Processor(output.ElementSpecs) (streaming.Processor[int, []string], error) {
+func (o *Factory) Processor(output.ElementSpecs) (streaming.Processor[int, FieldProvider], error) {
 	return newProcessor(o).Process, nil
 }
 
@@ -28,7 +29,7 @@ type Processor struct {
 }
 
 var (
-	_ streaming.Processor[int, []string] = (*Processor)(nil).Process
+	_ streaming.Processor[int, FieldProvider] = (*Processor)(nil).Process
 )
 
 func newProcessor(o *Factory) *Processor {
@@ -38,8 +39,8 @@ func newProcessor(o *Factory) *Processor {
 
 }
 
-func (p *Processor) Process(ctx context.Context, i iter.Seq[[]string]) (int, error) {
-	p.data = iterutils.Get(i)
+func (p *Processor) Process(ctx context.Context, i iter.Seq[FieldProvider]) (int, error) {
+	p.data = sliceutils.Transform(iterutils.Get(i), func(e FieldProvider) []string { return e.GetFields() })
 
 	if len(p.data) == 0 {
 		out.Print(ctx, "no elements found\n")

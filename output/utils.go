@@ -30,18 +30,20 @@ func CheckFieldNames(fieldnames []string, ctx context.Context, v flagutils.Valid
 	return nil
 }
 
-// Fields composes a (string) field list based on a sequence of strings and or
+// ComposeFields composes a (string) field list based on a sequence of strings and or
 // field lists.
-func Fields(fields ...interface{}) []string {
-	var result []string
+func ComposeFields(fields ...interface{}) Fields {
+	var result Fields
 	for _, f := range fields {
 		switch v := f.(type) {
 		case string:
 			result = append(result, v)
+		case Fields:
+			result = append(result, v...)
 		case []string:
 			result = append(result, v...)
 		case []interface{}:
-			result = append(result, Fields(v...)...)
+			result = append(result, ComposeFields(v...)...)
 		}
 	}
 	return result
