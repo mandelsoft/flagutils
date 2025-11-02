@@ -3,8 +3,8 @@ package tableoutput
 import (
 	"context"
 	"fmt"
-	"github.com/mandelsoft/flagutils/out"
 	"github.com/mandelsoft/flagutils/output"
+	"github.com/mandelsoft/flagutils/utils/out"
 	"github.com/mandelsoft/goutils/iterutils"
 	"github.com/mandelsoft/goutils/sliceutils"
 	"github.com/mandelsoft/streaming"

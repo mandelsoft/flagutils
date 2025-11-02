@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/mandelsoft/flagutils/out"
 	output "github.com/mandelsoft/flagutils/output/internal"
+	"github.com/mandelsoft/flagutils/utils/out"
 	"go.yaml.in/yaml/v3"
 )
 

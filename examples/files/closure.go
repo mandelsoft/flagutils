@@ -11,13 +11,13 @@ func Closure(e *Element) []*Element {
 	if e.Error != nil || !e.Fi.IsDir() {
 		return result
 	}
-	entries, err := os.ReadDir(e.Path())
+	entries, err := os.ReadDir(e.GetPath())
 	if err != nil {
 		e.Error = err
 		return result
 	}
 	for _, n := range entries {
-		result = append(result, Closure(NewElement(n.Name(), e.History.Add(e.Name)))...)
+		result = append(result, Closure(NewElement(n.Name(), e.Path))...)
 	}
 	return result
 }

@@ -13,31 +13,31 @@ import (
 
 type FieldProvider = output.FieldProvider
 
-func NewOutputFactory[I any](mapper chain.Mapper[I, FieldProvider], headers ...string) *OutputFactory[I, I] {
-	return &OutputFactory[I, I]{chain.New[I](), mapper, slices.Clone(headers)}
+func NewOutputFactory[I any](mapper chain.Mapper[I, FieldProvider], headers ...string) *OutputFactory[I, FieldProvider] {
+	return &OutputFactory[I, FieldProvider]{mapper, chain.New[FieldProvider](), slices.Clone(headers)}
 }
 
-func NewExtendedOutputFactory[I, O any](chain chain.Chain[I, O], mapper chain.Mapper[O, FieldProvider], headers ...string) *OutputFactory[I, O] {
-	return &OutputFactory[I, O]{chain, mapper, slices.Clone(headers)}
+func NewExtendedOutputFactory[I any, F FieldProvider](mapper chain.Mapper[I, F], chain chain.Chain[F, FieldProvider], headers ...string) *OutputFactory[I, F] {
+	return &OutputFactory[I, F]{mapper, chain, slices.Clone(headers)}
 }
 
-type OutputFactory[I, O any] struct {
-	chain   chain.Chain[I, O]
-	mapper  chain.Mapper[O, FieldProvider]
+type OutputFactory[I any, F FieldProvider] struct {
+	mapper  chain.Mapper[I, F]
+	chain   chain.Chain[F, FieldProvider]
 	headers []string
 }
 
-var _ output.OutputFactory[int] = (*OutputFactory[int, int])(nil)
+var _ output.OutputFactory[int] = (*OutputFactory[int, FieldProvider])(nil)
 
-func (o *OutputFactory[I, O]) GetMapper() chain.Mapper[O, FieldProvider] {
+func (o *OutputFactory[I, F]) GetMapper() chain.Mapper[I, F] {
 	return o.mapper
 }
 
-func (o *OutputFactory[I, O]) GetHeaders() []string {
+func (o *OutputFactory[I, F]) GetHeaders() []string {
 	return slices.Clone(o.headers)
 }
 
-func (o *OutputFactory[I, O]) GetFieldNames() []string {
+func (o *OutputFactory[I, F]) GetFieldNames() []string {
 	fields := slices.Clone(o.headers)
 	for i := range fields {
 		if strings.HasPrefix(fields[i], "-") {
@@ -47,19 +47,19 @@ func (o *OutputFactory[I, O]) GetFieldNames() []string {
 	return fields
 }
 
-func (o *OutputFactory[I, O]) Create(ctx context.Context, opts flagutils.OptionSetProvider, v flagutils.ValidationSet) (output.Output[I], error) {
+func (o *OutputFactory[I, F]) Create(ctx context.Context, opts flagutils.OptionSetProvider, v flagutils.ValidationSet) (output.Output[I], error) {
 	c := chain.New[I]()
 
 	e := closure.From[I](opts)
 	if e != nil && e.GetExploder() != nil {
 		c = chain.AddExplode(c, e.GetExploder())
 	}
-
-	co := chain.AddChain(c, o.chain)
-	mapped := chain.AddMap[FieldProvider](co, o.mapper)
+	mapped := chain.AddMap[F](c, o.mapper)
 	s := sort.From(opts)
 	if s != nil {
-		mapped = sort.AddSortChain(mapped, s)
+		mapped = sort.AddSortChain[I, F](mapped, s)
 	}
-	return output.NewOutput[I, FieldProvider](mapped, &Factory{slices.Clone(o.headers), From(opts)}), nil
+
+	co := chain.AddChain(mapped, o.chain)
+	return output.NewOutput[I, FieldProvider](co, &Factory{slices.Clone(o.headers), From(opts)}), nil
 }

@@ -36,6 +36,8 @@ func ComposeFields(fields ...interface{}) Fields {
 	var result Fields
 	for _, f := range fields {
 		switch v := f.(type) {
+		case FieldProvider:
+			result = append(result, v.GetFields()...)
 		case string:
 			result = append(result, v)
 		case Fields:

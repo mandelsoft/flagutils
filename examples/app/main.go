@@ -22,12 +22,19 @@ func Error(msg string, args ...interface{}) {
 func main() {
 	ctx := context.Background()
 	opts := flagutils.DefaultOptionSet{}
-	opts.Add(files.New(), closure.New[*files.Element](files.Closure), sort.New().AddComparator("name", files.NameComparator), tableoutput.New(), output.New(files.OutputsFactory))
+	opts.Add(
+		files.New(),
+		closure.New[*files.Element](files.Closure),
+		sort.New(), //.AddComparator("name", files.NameComparator)
+		tableoutput.New(),
+		output.New(files.OutputsFactory),
+	)
 
 	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
 	opts.AddFlags(fs)
 
-	err := fs.Parse([]string{"-c", "-s", "name", "output", "examples", "-o", "wide"})
+	err := fs.Parse([]string{"-c", "-s", "name", "output", "examples", "-o", "tree"})
+	// err := fs.Parse([]string{"-c", "-s", "name", "output", "examples", "-o", "wide"})
 	//err := fs.Parse([]string{"-c", "output", "examples", "-o", "YAML"})
 	if err != nil {
 		Error("%s", err)

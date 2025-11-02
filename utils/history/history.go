@@ -2,6 +2,7 @@ package history
 
 import (
 	"fmt"
+	"github.com/mandelsoft/goutils/general"
 	"github.com/mandelsoft/goutils/sliceutils"
 )
 
@@ -19,7 +20,7 @@ func (h History[T]) String() string {
 	s := ""
 	sep := ""
 	for _, e := range h {
-		s = fmt.Sprintf("%s%s%s", s, sep, e)
+		s = fmt.Sprintf("%s%s%s", s, sep, asString(e))
 		sep = "->"
 	}
 	return s
@@ -60,4 +61,26 @@ func (h History[T]) Equals(o History[T]) bool {
 		}
 	}
 	return true
+}
+
+func CompareFunc[K comparable](cmp general.CompareFunc[K]) func(a, b History[K]) int {
+	return func(a, b History[K]) int {
+		for i, e := range a {
+			if i >= len(b) {
+				return 1
+			}
+			c := cmp(e, b[i])
+			if c != 0 {
+				return c
+			}
+		}
+		return len(a) - len(b)
+	}
+}
+
+func asString[T comparable](v T) string {
+	if s, ok := any(v).(interface{ String() string }); ok {
+		return s.String()
+	}
+	return fmt.Sprintf("%v", v)
 }

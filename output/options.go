@@ -14,6 +14,7 @@ func From[I any](opts flagutils.OptionSetProvider) *Options[I] {
 }
 
 type Options[I any] struct {
+	flagutils.OptionBase[*Options[I]]
 	// config
 	factory OutputsFactory[I]
 
@@ -31,13 +32,15 @@ var (
 )
 
 func New[I any](out OutputsFactory[I]) *Options[I] {
-	return &Options[I]{factory: out}
+	o := &Options[I]{factory: out}
+	o.OptionBase = flagutils.NewBase(o)
+	return o
 }
 
 func (o *Options[I]) AddFlags(fs *pflag.FlagSet) {
 	keys := o.factory.GetModes()
 	if len(keys) > 0 {
-		fs.StringVarP(&o.mode, "mode", "o", "", fmt.Sprintf("DefaultOutput mode (%s)", strings.Join(keys, ", ")))
+		fs.StringVarP(&o.mode, o.Long("mode"), o.Short("o"), "", fmt.Sprintf("DefaultOutput mode (%s)", strings.Join(keys, ", ")))
 	}
 }
 

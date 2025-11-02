@@ -10,13 +10,16 @@ func From(opts flagutils.OptionSetProvider) *Options {
 }
 
 type Options struct {
+	flagutils.OptionBase[*Options]
 	optimizedColumns int
 	columns          []string
 	allColumns       bool
 }
 
 func New() *Options {
-	return &Options{}
+	o := &Options{}
+	o.OptionBase = flagutils.NewBase(o)
+	return o
 }
 
 func (o *Options) OptimizeColumns(n int) *Options {
@@ -52,5 +55,5 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	if o.optimizedColumns > 0 {
 		fs.BoolVarP(&o.allColumns, "all-columns", "", false, "show all table columns")
 	}
-	fs.StringSliceVarP(&o.columns, "columns", "", nil, "show selected columns, only")
+	fs.StringSliceVarP(&o.columns, o.Long("columns"), o.Short(""), nil, "show selected columns, only")
 }

@@ -58,3 +58,33 @@ func ValidatedOptions[O any](ctx context.Context, opts OptionSet, s ValidationSe
 	}
 	return o, nil
 }
+
+type OptionBase[T Options] struct {
+	self  T
+	long  *string
+	short *string
+}
+
+func NewBase[T Options](self T) OptionBase[T] {
+	return OptionBase[T]{self: self}
+}
+
+func (o *OptionBase[T]) Long(def string) string {
+	if o.long == nil {
+		return def
+	}
+	return *o.long
+}
+
+func (o *OptionBase[T]) Short(def string) string {
+	if o.short == nil {
+		return def
+	}
+	return *o.short
+}
+
+func (o *OptionBase[T]) WithNames(l, s string) T {
+	o.long = &l
+	o.short = &s
+	return o.self
+}

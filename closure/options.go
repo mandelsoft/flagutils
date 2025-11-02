@@ -8,12 +8,15 @@ import (
 )
 
 type Options[I any] struct {
+	flagutils.OptionBase[*Options[I]]
 	closure  bool
 	exploder chain.Exploder[I, I]
 }
 
 func From[I any](opts flagutils.OptionSetProvider) *Options[I] {
-	return flagutils.GetFrom[*Options[I]](opts)
+	o := flagutils.GetFrom[*Options[I]](opts)
+	o.OptionBase = flagutils.NewBase(o)
+	return o
 }
 
 var (

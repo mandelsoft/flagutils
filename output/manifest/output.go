@@ -2,8 +2,8 @@ package manifest
 
 import (
 	"context"
-	"github.com/mandelsoft/flagutils/out"
 	output "github.com/mandelsoft/flagutils/output/internal"
+	"github.com/mandelsoft/flagutils/utils/out"
 	"github.com/mandelsoft/goutils/iterutils"
 	"github.com/mandelsoft/streaming"
 	"iter"

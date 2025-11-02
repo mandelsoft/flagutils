@@ -15,6 +15,7 @@ import (
 )
 
 type Options struct {
+	flagutils.OptionBase[*Options]
 	sortFields  []string
 	fields      []string
 	comparators map[string]general.CompareFunc[string]
@@ -30,11 +31,13 @@ var (
 )
 
 func New() *Options {
-	return &Options{comparators: make(map[string]general.CompareFunc[string])}
+	o := &Options{comparators: make(map[string]general.CompareFunc[string])}
+	o.OptionBase = flagutils.NewBase(o)
+	return o
 }
 
 func (o *Options) AddFlags(fs *pflag.FlagSet) {
-	fs.StringSliceVarP(&o.sortFields, "sort", "s", []string{}, "sort fields")
+	fs.StringSliceVarP(&o.sortFields, o.Long("sort"), o.Short("s"), []string{}, "sort fields")
 }
 
 func (o *Options) AddComparator(name string, cmp general.CompareFunc[string]) *Options {
