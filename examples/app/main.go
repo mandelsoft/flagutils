@@ -6,12 +6,13 @@ import (
 	"github.com/mandelsoft/flagutils/closure"
 	"os"
 
+	"github.com/spf13/pflag"
+
 	"github.com/mandelsoft/flagutils"
 	"github.com/mandelsoft/flagutils/examples/files"
 	"github.com/mandelsoft/flagutils/output"
 	"github.com/mandelsoft/flagutils/output/tableoutput"
 	"github.com/mandelsoft/flagutils/sort"
-	"github.com/spf13/pflag"
 )
 
 func Error(msg string, args ...interface{}) {
@@ -25,7 +26,7 @@ func main() {
 	opts.Add(
 		files.New(),
 		closure.New[*files.Element](files.Closure),
-		sort.New(), //.AddComparator("name", files.NameComparator)
+		sort.New(),
 		tableoutput.New(),
 		output.New(files.OutputsFactory),
 	)

@@ -17,7 +17,7 @@ func Closure(e *Element) []*Element {
 		return result
 	}
 	for _, n := range entries {
-		result = append(result, Closure(NewElement(n.Name(), e.Path))...)
+		result = append(result, Closure(NewElement(n.Name(), e.GetHierarchy()))...)
 	}
 	return result
 }

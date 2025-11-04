@@ -2,8 +2,8 @@ package files
 
 import (
 	"fmt"
+	"github.com/mandelsoft/flagutils/output/treeoutput/topo"
 	"os"
-	"strings"
 
 	"github.com/mandelsoft/flagutils/output"
 	"github.com/mandelsoft/flagutils/output/tableoutput"
@@ -13,7 +13,7 @@ import (
 var OutputsFactory = output.NewOutputsFactory[*Element]().
 	Add("", tableoutput.NewOutputFactory[*Element](map_standard, "NAME", "ERROR")).
 	Add("wide", tableoutput.NewOutputFactory[*Element](map_wide, "MODE", "NAME", "-SIZE", "ERROR")).
-	Add("tree", treeoutput.NewOutputFactory[string, *Element](treeoutput.WithHeader[string](""), strings.Compare, map_tree, "MODE", "NAME", "-SIZE", "ERROR")).
+	Add("tree", treeoutput.NewOutputFactory[string, string, *Element](treeoutput.WithHeader[string](""), topo.NewStringIdComparerFactory[string, *Element](), map_tree, "MODE", "NAME", "-SIZE", "ERROR")).
 	AddManifestOutputs()
 
 func map_standard(e *Element) output.FieldProvider {

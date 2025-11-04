@@ -4,47 +4,39 @@ import (
 	"github.com/mandelsoft/flagutils"
 	"github.com/mandelsoft/flagutils/closure"
 	"github.com/mandelsoft/flagutils/output"
+	"github.com/mandelsoft/flagutils/output/treeoutput/topo"
 	"github.com/mandelsoft/flagutils/utils/history"
 	"github.com/mandelsoft/flagutils/utils/tree"
+	"github.com/mandelsoft/goutils/generics"
 	"iter"
 	"os"
 	"strings"
 )
 
 type Element struct {
-	Path    []string
-	History history.History[string]
-	Error   error
-	Fi      os.FileInfo
+	topo.TopoInfo[string, string]
+	Error error
+	Fi    os.FileInfo
 }
 
 var _ history.HistoryProvider[string] = (*Element)(nil)
 var _ tree.Object[string] = (*Element)(nil)
 
 func NewElement(name string, hist history.History[string]) *Element {
-	p := hist.Add(name)
-	e := &Element{Path: p, History: p[:len(p)-1]}
+	e := &Element{TopoInfo: topo.NewStringIdTopoInfo[string](name, hist)}
 	e.Fi, e.Error = os.Stat(e.GetPath())
 	return e
 }
 
-func (e *Element) GetKey() string {
-	return e.Path[len(e.Path)-1]
-}
-
 func (e *Element) IsNode() *string {
 	if e.Error == nil && e.Fi.IsDir() {
-		return &e.Path[len(e.Path)-1]
+		return generics.PointerTo(e.GetKey())
 	}
 	return nil
 }
 
-func (e *Element) GetHistory() history.History[string] {
-	return e.History
-}
-
 func (e *Element) GetPath() string {
-	return strings.Join(e.Path, string(os.PathSeparator))
+	return strings.Join(e.GetHierarchy(), string(os.PathSeparator))
 }
 
 func (e *Element) AsManifest() any {
@@ -54,8 +46,8 @@ func (e *Element) AsManifest() any {
 	if e.Error != nil {
 		m["error"] = e.Error.Error()
 	} else {
-		if len(e.History) != 0 {
-			m["path"] = strings.Join(e.History, string(os.PathSeparator))
+		if len(e.GetHistory()) > 1 {
+			m["path"] = strings.Join(e.GetHistory(), string(os.PathSeparator))
 		}
 		m["mode"] = e.Fi.Mode().String()
 		m["fileinfo"] = e.Fi.Mode()
@@ -98,7 +90,7 @@ func (s *SourceFactory) Elements(specs output.ElementSpecs) (iter.Seq[*Element],
 					}
 				} else {
 					for _, f := range entries {
-						e := NewElement(f.Name(), e.Path)
+						e := NewElement(f.Name(), e.GetHierarchy())
 						if !yield(e) {
 						}
 					}
