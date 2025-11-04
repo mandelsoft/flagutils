@@ -1,14 +1,17 @@
 package topo
 
-import "github.com/mandelsoft/goutils/general"
+import (
+	"github.com/mandelsoft/goutils/general"
+	"iter"
+)
 
 type ComparerFactory[O any] interface {
-	Comparer(in []O) general.CompareFunc[O]
+	Comparer(in iter.Seq[O]) general.CompareFunc[O]
 }
 
-type ComparerFactoryFunc[O any] func(in []O) general.CompareFunc[O]
+type ComparerFactoryFunc[O any] func(in iter.Seq[O]) general.CompareFunc[O]
 
-func (f ComparerFactoryFunc[O]) Comparer(in []O) general.CompareFunc[O] {
+func (f ComparerFactoryFunc[O]) Comparer(in iter.Seq[O]) general.CompareFunc[O] {
 	return f(in)
 }
 
@@ -18,7 +21,7 @@ func NewStringIdComparerFactory[T comparable, O TopoInfo[T, string]]() ComparerF
 	return NewDefaultComparerFactory[T, string, O](StringIdProviderFunc)
 }
 
-func NewStringIdCompareFunc[T comparable, O TopoInfo[T, string]](in []O) general.CompareFunc[O] {
+func NewStringIdCompareFunc[T comparable, O TopoInfo[T, string]](in iter.Seq[O]) general.CompareFunc[O] {
 	return NewDefaultCompareFunc(in, StringIdProviderFunc)
 }
 
@@ -47,16 +50,18 @@ type DefaultComparer[T, I comparable, O TopoInfo[T, I]] struct {
 // a slices.Sort function to provide a topologically sorted element list
 // obeying the element order of siblings found in the given initial list.
 func NewDefaultComparerFactory[T, I comparable, O TopoInfo[T, I]](mapper IdProvider[T, I]) ComparerFactory[O] {
-	return ComparerFactoryFunc[O](func(in []O) general.CompareFunc[O] {
+	return ComparerFactoryFunc[O](func(in iter.Seq[O]) general.CompareFunc[O] {
 		return NewDefaultCompareFunc(in, mapper)
 	})
 }
 
-func NewDefaultCompareFunc[T, I comparable, O TopoInfo[T, I]](in []O, mapper IdProvider[T, I]) general.CompareFunc[O] {
+func NewDefaultCompareFunc[T, I comparable, O TopoInfo[T, I]](in iter.Seq[O], mapper IdProvider[T, I]) general.CompareFunc[O] {
 	index := make(map[I]int)
 
-	for i, e := range in {
+	i := 0
+	for e := range in {
 		index[e.GetId()] = i
+		i++
 	}
 	return (&DefaultComparer[T, I, O]{
 		index:  index,

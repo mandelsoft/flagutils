@@ -3,7 +3,7 @@ module github.com/mandelsoft/flagutils
 go 1.25.0
 
 require (
-	github.com/mandelsoft/goutils v0.0.0-20251102201303-2dad79a134aa
+	github.com/mandelsoft/goutils v0.0.0-20251104155803-a79e705042aa
 	github.com/mandelsoft/streaming v0.0.0-20251102201821-be737d1230f2
 	github.com/onsi/ginkgo/v2 v2.26.0
 	github.com/onsi/gomega v1.38.2

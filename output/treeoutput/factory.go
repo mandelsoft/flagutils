@@ -5,6 +5,7 @@ import (
 	"github.com/mandelsoft/flagutils/output/tableoutput"
 	"github.com/mandelsoft/flagutils/output/treeoutput/topo"
 	"github.com/mandelsoft/flagutils/utils/tree"
+	"github.com/mandelsoft/goutils/iterutils"
 	"github.com/mandelsoft/goutils/sliceutils"
 	"github.com/mandelsoft/streaming/chain"
 	"slices"
@@ -18,6 +19,9 @@ type Element[K, I comparable] interface {
 	topo.TopoInfo[K, I]
 }
 
+// TreeElement represents an interface combining tree hierarchy, unique
+// identity, and field data for processing elements providing access
+// to the base object of type O.
 type TreeElement[K, I comparable, O Element[K, I]] interface {
 	output.FieldProvider
 	Element[K, I]
@@ -51,14 +55,18 @@ func NewOutputFactory[K, I comparable, O Element[K, I]](opts *TreeOutputOptions[
 	)
 }
 
+func mapToElement[K, I comparable, O Element[K, I]](e TreeElement[K, I, O]) O {
+	return e.GetElement()
+}
+
 func treeTransform[K, I comparable, O Element[K, I]](cmp topo.ComparerFactory[O]) func(in []TreeElement[K, I, O]) []*tree.TreeObject[K] {
 	return func(in []TreeElement[K, I, O]) []*tree.TreeObject[K] {
-		hcmp := cmp.Comparer(sliceutils.Transform(in, func(e TreeElement[K, I, O]) O {
-			return e.GetElement()
-		}))
-		slices.SortFunc(in, func(a, b TreeElement[K, I, O]) int {
-			return hcmp(a.GetElement(), b.GetElement())
-		})
+		if cmp != nil {
+			hcmp := cmp.Comparer(iterutils.ForMapped(mapToElement[K, I, O], in...))
+			slices.SortFunc(in, func(a, b TreeElement[K, I, O]) int {
+				return hcmp(a.GetElement(), b.GetElement())
+			})
+		}
 		return tree.MapToTree[K](sliceutils.Convert[tree.Object[K]](in), nil)
 	}
 }
