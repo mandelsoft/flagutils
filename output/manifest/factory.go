@@ -18,7 +18,7 @@ func NewOutputFactory[I any](formatter Formatter) *OutputFactory[I] {
 	return &OutputFactory[I]{formatter}
 }
 
-func (o *OutputFactory[I]) GetFieldNames() []string {
+func (o *OutputFactory[I]) GetFieldNames(string) []string {
 	return nil
 }
 

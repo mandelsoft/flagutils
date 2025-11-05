@@ -10,7 +10,7 @@ import (
 type Options[I any] struct {
 	flagutils.OptionBase[*Options[I]]
 	closure  bool
-	exploder chain.Exploder[I, I]
+	exploder ExploderFactory[I]
 }
 
 func From[I any](opts flagutils.OptionSetProvider) *Options[I] {
@@ -23,7 +23,19 @@ var (
 	_ flagutils.Options = (*Options[int])(nil)
 )
 
+type ExploderFactory[I any] func(opts flagutils.OptionSetProvider) chain.ExploderFactory[I, I]
+
+func ExploderFactoryFor[I any](e chain.Exploder[I, I]) ExploderFactory[I] {
+	return func(opts flagutils.OptionSetProvider) chain.ExploderFactory[I, I] {
+		return chain.ExploderFactoryFor[I, I](e)
+	}
+}
+
 func New[I any](exploder chain.Exploder[I, I]) *Options[I] {
+	return &Options[I]{exploder: ExploderFactoryFor[I](exploder)}
+}
+
+func NewByFactory[I any](exploder ExploderFactory[I]) *Options[I] {
 	return &Options[I]{exploder: exploder}
 }
 
@@ -31,16 +43,17 @@ func (o *Options[I]) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVarP(&o.closure, "closure", "c", false, "calculate closure")
 }
 
-func (o *Options[I]) GetExploder() chain.Exploder[I, I] {
-	if !o.closure {
+func (o *Options[I]) GetExploderFactory(opts flagutils.OptionSetProvider) chain.ExploderFactory[I, I] {
+	if !o.closure || o.exploder == nil {
 		return nil
 	}
-	return o.exploder
+	return o.exploder(opts)
 }
 
-func AddExploderChain[I, O any](c chain.Chain[I, O], opts *Options[O]) chain.Chain[I, O] {
+func AddExploderChain[I, O any](c chain.Chain[I, O], opts flagutils.OptionSetProvider) chain.Chain[I, O] {
+	o := From[O](opts)
 	return chain.AddConditional(c,
-		func(context.Context) bool { return opts != nil && opts.closure },
-		chain.Exploded(opts.exploder),
+		func(context.Context) bool { return o != nil && o.closure },
+		chain.ExplodedByFactory(o.GetExploderFactory(opts)),
 	)
 }

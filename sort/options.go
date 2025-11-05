@@ -14,10 +14,12 @@ import (
 	"github.com/spf13/pflag"
 )
 
+const FIELD_MODE_SORT = "<sort>"
+
 type Options struct {
 	flagutils.OptionBase[*Options]
 	sortFields  []string
-	fields      []string
+	fieldInfos  []*fieldInfo
 	comparators map[string]general.CompareFunc[string]
 }
 
@@ -41,12 +43,18 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (o *Options) AddComparator(name string, cmp general.CompareFunc[string]) *Options {
-	o.comparators[name] = cmp
+	o.comparators[strings.ToLower(name)] = cmp
 	return o
 }
 
 func (o *Options) GetComparator(name string) general.CompareFunc[string] {
 	return o.comparators[name]
+}
+
+type fieldInfo struct {
+	order int
+	index int
+	cmp   general.CompareFunc[string]
 }
 
 func (o *Options) Validate(ctx context.Context, opts flagutils.OptionSet, v flagutils.ValidationSet) error {
@@ -65,24 +73,38 @@ func (o *Options) Validate(ctx context.Context, opts flagutils.OptionSet, v flag
 	if fields == nil {
 		return fmt.Errorf("invalid sort fields: %v", o.sortFields)
 	}
-	o.fields = fields.GetFieldNames()
-	if o.fields == nil {
+	names := fields.GetFieldNames(FIELD_MODE_SORT)
+	if names == nil {
 		return fmt.Errorf("invalid sort fields: %v", o.sortFields)
 	}
-	for i, v := range o.fields {
-		o.fields[i] = strings.ToLower(v)
+	for i, n := range names {
+		names[i] = strings.ToLower(n)
 	}
+
 	var wrong []string
-	var names []string = o.fields
-	for _, o := range o.sortFields {
-		if !slices.Contains(names, o) {
-			wrong = append(wrong, o)
+	for _, v := range o.sortFields {
+		order := 1
+		if strings.HasPrefix(v, "-") {
+			order = -1
+			v = v[1:]
 		}
+		idx := slices.Index(names, strings.ToLower(v))
+		if idx < 0 {
+			wrong = append(wrong, v)
+		}
+		cmp := o.comparators[v]
+		if cmp == nil {
+			cmp = strings.Compare
+		}
+		info := &fieldInfo{order: order, index: idx, cmp: cmp}
+		o.fieldInfos = append(o.fieldInfos, info)
 	}
+
 	if len(wrong) != 0 {
 		sort.Strings(wrong)
 		return fmt.Errorf("invalid sort fields: %v", wrong)
 	}
+	slices.Reverse(o.fieldInfos)
 	return nil
 }
 
@@ -96,17 +118,9 @@ func AddSortChain[I any, F output.FieldProvider](c chain.Chain[I, F], opts *Opti
 func (o *Options) Compare(af, bf output.FieldProvider) int {
 	a := af.GetFields()
 	b := bf.GetFields()
-	for i := range o.sortFields {
-		f := o.sortFields[len(o.sortFields)-i-1]
-		i := slices.Index(o.fields, f)
-		if i >= 0 {
-			cmp := o.comparators[f]
-			if cmp == nil {
-				cmp = strings.Compare
-			}
-			if c := cmp(a[i], b[i]); c != 0 {
-				return c
-			}
+	for _, i := range o.fieldInfos {
+		if c := i.cmp(a[i.index], b[i.index]); c != 0 {
+			return c * i.order
 		}
 	}
 	return 0

@@ -37,7 +37,7 @@ func (o *OutputFactory[I, F]) GetHeaders() []string {
 	return slices.Clone(o.headers)
 }
 
-func (o *OutputFactory[I, F]) GetFieldNames() []string {
+func (o *OutputFactory[I, F]) GetFieldNames(stage string) []string {
 	fields := slices.Clone(o.headers)
 	for i := range fields {
 		if strings.HasPrefix(fields[i], "-") {
@@ -51,8 +51,11 @@ func (o *OutputFactory[I, F]) Create(ctx context.Context, opts flagutils.OptionS
 	c := chain.New[I]()
 
 	e := closure.From[I](opts)
-	if e != nil && e.GetExploder() != nil {
-		c = chain.AddExplode(c, e.GetExploder())
+	if e != nil {
+		f := e.GetExploderFactory(opts)
+		if f != nil {
+			c = chain.AddExplodeByFactory(c, f)
+		}
 	}
 	mapped := chain.AddMap[F](c, o.mapper)
 	s := sort.From(opts)

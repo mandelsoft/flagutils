@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/mandelsoft/goutils v0.0.0-20251104155803-a79e705042aa
-	github.com/mandelsoft/streaming v0.0.0-20251102201821-be737d1230f2
+	github.com/mandelsoft/streaming v0.0.0-20251105135223-ffdd77f8fe2e
 	github.com/onsi/ginkgo/v2 v2.26.0
 	github.com/onsi/gomega v1.38.2
 	github.com/spf13/pflag v1.0.10

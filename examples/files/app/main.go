@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/mandelsoft/flagutils/closure"
 	"os"
 
 	"github.com/spf13/pflag"
 
 	"github.com/mandelsoft/flagutils"
-	"github.com/mandelsoft/flagutils/examples/files"
+	"github.com/mandelsoft/flagutils/closure"
+	"github.com/mandelsoft/flagutils/examples/files/files"
 	"github.com/mandelsoft/flagutils/output"
 	"github.com/mandelsoft/flagutils/output/tableoutput"
 	"github.com/mandelsoft/flagutils/sort"

@@ -19,7 +19,7 @@ type FieldProvider interface {
 }
 
 type FieldNameProvider interface {
-	GetFieldNames() []string
+	GetFieldNames(stage string) []string
 }
 
 type Result = int
@@ -44,6 +44,6 @@ type OutputsFactory[I any] interface {
 	Add(mode string, out OutputFactory[I]) OutputsFactory[I]
 	AddManifestOutputs() OutputsFactory[I]
 
-	GetFieldNames(mode string) []string
+	GetFieldNames(mode, stage string) []string
 	CreateOutput(ctx context.Context, mode string, opts flagutils.OptionSetProvider, v flagutils.ValidationSet) (Output[I], error)
 }

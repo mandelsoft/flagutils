@@ -4,6 +4,7 @@ import (
 	"github.com/mandelsoft/flagutils/output"
 	"github.com/mandelsoft/flagutils/output/tableoutput"
 	"github.com/mandelsoft/flagutils/output/treeoutput/topo"
+	"github.com/mandelsoft/flagutils/sort"
 	"github.com/mandelsoft/flagutils/utils/tree"
 	"github.com/mandelsoft/goutils/iterutils"
 	"github.com/mandelsoft/goutils/sliceutils"
@@ -41,18 +42,38 @@ func (e *element[K, I, O]) GetFields() []string {
 	return e.fields
 }
 
-func NewOutputFactory[K, I comparable, O Element[K, I]](opts *TreeOutputOptions[K], cmp topo.ComparerFactory[O], mapper chain.Mapper[O, output.FieldProvider], headers ...string) *tableoutput.OutputFactory[O, TreeElement[K, I, O]] {
+////////////////////////////////////////////////////////////////////////////////
+
+type OutputFactory[K, I comparable, O Element[K, I]] struct {
+	*tableoutput.OutputFactory[O, TreeElement[K, I, O]]
+	dataFields []string
+}
+
+func (o *OutputFactory[K, I, O]) GetFieldNames(stage string) []string {
+	if stage == output.FIELD_MODE_OUTPUT {
+		return o.OutputFactory.GetFieldNames(stage)
+	}
+	if stage == sort.FIELD_MODE_SORT {
+		return o.dataFields
+	}
+	return nil
+}
+
+func NewOutputFactory[K, I comparable, O Element[K, I]](opts *TreeOutputOptions[K], cmp topo.ComparerFactory[O], mapper chain.Mapper[O, output.FieldProvider], headers ...string) *OutputFactory[K, I, O] {
 	c := chain.Transformed[TreeElement[K, I, O], *tree.TreeObject[K]](treeTransform[K, I, O](cmp))
 
-	return tableoutput.NewExtendedOutputFactory[O, TreeElement[K, I, O]](
-		func(o O) TreeElement[K, I, O] {
-			return &element[K, I, O]{
-				o, mapper(o).GetFields(),
-			}
-		},
-		chain.AddMap[output.FieldProvider](c, treeMapping[K](len(headers), opts)),
-		output.ComposeFields(opts.Header(), headers)...,
-	)
+	return &OutputFactory[K, I, O]{
+		OutputFactory: tableoutput.NewExtendedOutputFactory[O, TreeElement[K, I, O]](
+			func(o O) TreeElement[K, I, O] {
+				return &element[K, I, O]{
+					o, mapper(o).GetFields(),
+				}
+			},
+			chain.AddMap[output.FieldProvider](c, treeMapping[K](len(headers), opts)),
+			output.ComposeFields(opts.Header(), headers)...,
+		),
+		dataFields: headers,
+	}
 }
 
 func mapToElement[K, I comparable, O Element[K, I]](e TreeElement[K, I, O]) O {

@@ -10,6 +10,8 @@ import (
 
 ////////////////////////////////////////////////////////////////////////////////
 
+const FIELD_MODE_OUTPUT = "<output>"
+
 type outputsFactory[I any] struct {
 	modes map[string]OutputFactory[I]
 }
@@ -37,12 +39,12 @@ func (f *outputsFactory[I]) AddManifestOutputs() OutputsFactory[I] {
 	return manifest.AddManifestOutputs(f)
 }
 
-func (f *outputsFactory[I]) GetFieldNames(mode string) []string {
+func (f *outputsFactory[I]) GetFieldNames(mode, stage string) []string {
 	of := f.modes[mode]
 	if of == nil {
 		return nil
 	}
-	return of.GetFieldNames()
+	return of.GetFieldNames(stage)
 }
 
 func (f *outputsFactory[I]) CreateOutput(ctx context.Context, mode string, opts flagutils.OptionSetProvider, v flagutils.ValidationSet) (Output[I], error) {

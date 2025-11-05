@@ -17,7 +17,7 @@ func CheckFieldNames(fieldnames []string, ctx context.Context, v flagutils.Valid
 	if fields == nil {
 		return fmt.Errorf("invalid fields: %v", fieldnames)
 	}
-	names := fields.GetFieldNames()
+	names := fields.GetFieldNames("")
 	if names == nil {
 		return fmt.Errorf("invalid fields: %v", fieldnames)
 	}

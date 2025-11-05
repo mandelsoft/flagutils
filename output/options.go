@@ -56,8 +56,8 @@ func (o *Options[I]) GetOutput() Output[I] {
 	return o.output
 }
 
-func (o *Options[I]) GetFieldNames() []string {
-	return o.factory.GetFieldNames(o.mode)
+func (o *Options[I]) GetFieldNames(stage string) []string {
+	return o.factory.GetFieldNames(o.mode, stage)
 }
 
 func (o *Options[I]) Validate(ctx context.Context, opts flagutils.OptionSet, v flagutils.ValidationSet) error {

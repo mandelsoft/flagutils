@@ -66,7 +66,7 @@ type SourceFactory struct {
 func NewSourceFactory(opts flagutils.OptionSetProvider) *SourceFactory {
 	mine := From(opts)
 	all := closure.From[*Element](opts)
-	if all != nil && all.GetExploder() != nil {
+	if all != nil && all.GetExploderFactory(opts) != nil {
 		mine.dflag = true
 	}
 	return &SourceFactory{mine}

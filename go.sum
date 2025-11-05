@@ -42,6 +42,8 @@ github.com/mandelsoft/logging v0.0.0-20240618075559-fdca28a87b0a h1:MAvh0gbP2uwK
 github.com/mandelsoft/logging v0.0.0-20240618075559-fdca28a87b0a/go.mod h1:uO460C1lIB3IOOgrbXhAlz3AKsOv4T2K6ALBn3PwuSg=
 github.com/mandelsoft/streaming v0.0.0-20251102201821-be737d1230f2 h1:2FXFcg0AMuHEml7hlOD+/qS4yveHgKWbincd9mROO10=
 github.com/mandelsoft/streaming v0.0.0-20251102201821-be737d1230f2/go.mod h1:5+NQF5CzMcBUFkvklRNPMZD/tnsdDo/zCY93NnEGtaA=
+github.com/mandelsoft/streaming v0.0.0-20251105135223-ffdd77f8fe2e h1:53Rtngyx62PLE0/ivmXL2FOkGN19ei0UZXim1urp59w=
+github.com/mandelsoft/streaming v0.0.0-20251105135223-ffdd77f8fe2e/go.mod h1:jmaoA9YSkGajbcdQMTyKGLpJkDKy/wZ2oO5TQsQGc8s=
 github.com/mandelsoft/vfs v0.4.5-0.20250514111339-d7b067920e91 h1:11lzvnGwbdzG9yURbVnBo6sLk1peCrZr4UlEQKYzb1g=
 github.com/mandelsoft/vfs v0.4.5-0.20250514111339-d7b067920e91/go.mod h1:3ODt1ze/dCdOJCbhHX8ARAw7l422fDZUhbt0wqplBRs=
 github.com/maruel/natural v1.1.1 h1:Hja7XhhmvEFhcByqDoHz9QZbkWey+COd9xWfCfn1ioo=

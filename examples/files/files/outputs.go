@@ -2,12 +2,12 @@ package files
 
 import (
 	"fmt"
-	"github.com/mandelsoft/flagutils/output/treeoutput/topo"
 	"os"
 
 	"github.com/mandelsoft/flagutils/output"
 	"github.com/mandelsoft/flagutils/output/tableoutput"
 	"github.com/mandelsoft/flagutils/output/treeoutput"
+	"github.com/mandelsoft/flagutils/output/treeoutput/topo"
 )
 
 var OutputsFactory = output.NewOutputsFactory[*Element]().
