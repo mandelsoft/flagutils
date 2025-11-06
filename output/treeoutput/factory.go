@@ -24,7 +24,7 @@ type Element[K, I comparable] interface {
 // identity, and field data for processing elements providing access
 // to the base object of type O.
 type TreeElement[K, I comparable, O Element[K, I]] interface {
-	output.FieldProvider
+	output.ExtendedFieldProvider
 	Element[K, I]
 	GetElement() O
 }
@@ -40,6 +40,10 @@ func (e *element[K, I, O]) GetElement() O {
 
 func (e *element[K, I, O]) GetFields() []string {
 	return e.fields
+}
+
+func (e *element[K, I, O]) InsertFields(i int, fields ...string) {
+	e.fields = slices.Insert(e.fields, i, fields...)
 }
 
 ////////////////////////////////////////////////////////////////////////////////

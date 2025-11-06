@@ -3,6 +3,7 @@ package topo_test
 import (
 	"fmt"
 	"github.com/mandelsoft/goutils/general"
+	"github.com/mandelsoft/goutils/iterutils"
 	"slices"
 	"strings"
 
@@ -68,7 +69,7 @@ var _ = Describe("TopoSorter", func() {
 			/* 13: a/d   */ AD,
 			/* 14: a     */ A,
 		}
-		cmp = topo.NewDefaultCompareFunc(elements, IdProvider)
+		cmp = topo.NewDefaultCompareFunc(iterutils.For(elements...), IdProvider)
 
 	})
 

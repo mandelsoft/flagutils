@@ -18,7 +18,7 @@ func map_standard(e *Element) output.FieldProvider {
 	if e.err != nil {
 		errstr = e.err.Error()
 	}
-	return output.Fields{e.GetPath(), errstr}
+	return &output.Fields{e.GetPath(), errstr}
 }
 
 func map_wide(e *Element) output.FieldProvider {
@@ -26,7 +26,7 @@ func map_wide(e *Element) output.FieldProvider {
 	if e.err != nil {
 		errstr = e.err.Error()
 	}
-	return output.Fields{e.GetPath(), e.GetValue(), errstr}
+	return &output.Fields{e.GetPath(), e.GetValue(), errstr}
 }
 
 func map_tree(e *Element) output.FieldProvider {
@@ -34,5 +34,5 @@ func map_tree(e *Element) output.FieldProvider {
 	if e.err != nil {
 		errstr = e.err.Error()
 	}
-	return output.Fields{e.GetKey(), e.GetValue(), errstr}
+	return &output.Fields{e.GetKey(), e.GetValue(), errstr}
 }

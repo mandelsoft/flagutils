@@ -12,25 +12,35 @@ import (
 )
 
 type FieldProvider = output.FieldProvider
+type ExtendedFieldProvider = output.ExtendedFieldProvider
 
 func NewOutputFactory[I any](mapper chain.Mapper[I, FieldProvider], headers ...string) *OutputFactory[I, FieldProvider] {
-	return &OutputFactory[I, FieldProvider]{mapper, chain.New[FieldProvider](), slices.Clone(headers)}
+	return &OutputFactory[I, FieldProvider]{mapper: mapper, chain: chain.New[FieldProvider](), headers: slices.Clone(headers)}
+}
+
+func NewOutputFactoryByProvider[I any](provider HierarchyMappingProvider[I, FieldProvider]) *OutputFactory[I, FieldProvider] {
+	return &OutputFactory[I, FieldProvider]{provider: provider, chain: chain.New[FieldProvider]()}
 }
 
 func NewExtendedOutputFactory[I any, F FieldProvider](mapper chain.Mapper[I, F], chain chain.Chain[F, FieldProvider], headers ...string) *OutputFactory[I, F] {
-	return &OutputFactory[I, F]{mapper, chain, slices.Clone(headers)}
+	return &OutputFactory[I, F]{mapper: mapper, chain: chain, headers: slices.Clone(headers)}
 }
 
 type OutputFactory[I any, F FieldProvider] struct {
-	mapper  chain.Mapper[I, F]
-	chain   chain.Chain[F, FieldProvider]
-	headers []string
+	provider HierarchyMappingProvider[I, F]
+	mapper   chain.Mapper[I, F]
+	chain    chain.Chain[F, FieldProvider]
+	headers  []string
 }
 
 var _ output.OutputFactory[int] = (*OutputFactory[int, FieldProvider])(nil)
 
 func (o *OutputFactory[I, F]) GetMapper() chain.Mapper[I, F] {
 	return o.mapper
+}
+
+func (o *OutputFactory[I, F]) GetProvider() HierarchyMappingProvider[I, F] {
+	return o.provider
 }
 
 func (o *OutputFactory[I, F]) GetHeaders() []string {
@@ -54,15 +64,24 @@ func (o *OutputFactory[I, F]) Create(ctx context.Context, opts flagutils.OptionS
 	if e != nil {
 		f := e.GetExploderFactory(opts)
 		if f != nil {
-			c = chain.AddExplodeByFactory(c, f)
+			c = chain.AddExplodeByFactory[I](c, f)
 		}
 	}
-	mapped := chain.AddMap[F](c, o.mapper)
+	mapper := o.mapper
+	headers := o.headers
+	if mapper == nil {
+		var err error
+		mapper, headers, err = o.provider.GetMapping(opts)
+		if err != nil {
+			return nil, err
+		}
+	}
+	mapped := chain.AddMap[F](c, mapper)
 	s := sort.From(opts)
 	if s != nil {
 		mapped = sort.AddSortChain[I, F](mapped, s)
 	}
 
 	co := chain.AddChain(mapped, o.chain)
-	return output.NewOutput[I, FieldProvider](co, &Factory{slices.Clone(o.headers), From(opts)}), nil
+	return output.NewOutput[I, FieldProvider](co, &Factory{slices.Clone(headers), From(opts)}), nil
 }

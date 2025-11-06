@@ -8,8 +8,11 @@ type Fields = internal.Fields
 
 type FieldNameProvider = internal.FieldNameProvider
 type FieldProvider = internal.FieldProvider
+type ExtendedFieldProvider = internal.ExtendedFieldProvider
 type ElementSpecs = internal.ElementSpecs
 type Result = internal.Result
+
+type MappingProvider[I any, F FieldProvider] = internal.MappingProvider[I, F]
 
 ////////////////////////////////////////////////////////////////////////////////
 
