@@ -7,44 +7,48 @@ import (
 
 	"github.com/mandelsoft/flagutils"
 	"github.com/mandelsoft/flagutils/parallel"
+	"github.com/mandelsoft/flagutils/utils/pool"
 	"github.com/mandelsoft/streaming/chain"
 	"github.com/mandelsoft/streaming/processing"
 )
 
+// ClosureFactory creates an exploder factory generating
+// a sequential or parallel exploder function based on
+// flagutils.OptionSetProvider depending
+// on the settings of optional parallel.Options.
 func ClosureFactory(opts flagutils.OptionSetProvider) chain.ExploderFactory[*Element, *Element] {
-	var pool processing.Processing = nil
+	var proc processing.Processing = nil
 	p := parallel.From(opts)
 	if p != nil {
-		pool = p.GetPool()
+		proc = p.GetPool()
 	}
 
+	// this is the chain.ExploderFactory.
 	return func(ctx context.Context) chain.Exploder[*Element, *Element] {
-		if pool == nil {
+		if proc == nil {
+			// use sequential closure calculation chain.Exploder function
 			return Closure
 		}
+		// use parallel closure calculation chain.Exploder function
 		return func(in *Element) []*Element {
-			result := &result{pool: pool}
+			result := &result{pool: pool.New[*Element](proc)}
 			result.handle(in)
-			result.wg.Wait()
+			result.wait()
 			return result.result
 		}
 	}
 }
 
-func (r *result) handle(e *Element) {
-	if e.Error != nil || !e.Fi.IsDir() {
-		r.Add(e)
-		return
-	}
-	r.wg.Add(1)
-	r.pool.Execute(&request{r, e})
-}
+////////////////////////////////////////////////////////////////////////////////
 
 type result struct {
 	lock   sync.Mutex
-	pool   processing.Processing
-	wg     sync.WaitGroup
+	pool   *pool.Processing[*Element]
 	result []*Element
+}
+
+func (r *result) wait() {
+	r.pool.Wait()
 }
 
 func (r *result) Add(e *Element) {
@@ -53,28 +57,30 @@ func (r *result) Add(e *Element) {
 	r.result = append(r.result, e)
 }
 
-type request struct {
-	r *result
-	e *Element
-}
-
-var _ processing.Request = (*request)(nil)
-
-// Execute evaluates a directory.
-// For sub-directories a new request is created.
-func (r *request) Execute(ctx context.Context) {
-	defer r.r.wg.Done()
-	entries, err := os.ReadDir(r.e.GetPath())
-	if err != nil {
-		r.e.Error = err
-		r.r.Add(r.e)
+func (r *result) handle(e *Element) {
+	if e.Error != nil || !e.Fi.IsDir() {
+		r.Add(e)
 		return
 	}
-	r.r.Add(r.e)
+	r.pool.Execute(e, r.execute)
+}
+
+// execute evaluates a directory.
+// For sub-directories a new request is created.
+func (r *result) execute(ctx context.Context, p *pool.Processing[*Element], e *Element) {
+	entries, err := os.ReadDir(e.GetPath())
+	if err != nil {
+		e.Error = err
+		r.Add(e)
+		return
+	}
+	r.Add(e)
 	for _, n := range entries {
-		r.r.handle(NewElement(n.Name(), r.e.GetHierarchy()))
+		r.handle(NewElement(n.Name(), e.GetHierarchy()))
 	}
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 // Closure creates the transitive closure for a file element
 // by recursively following directories.
