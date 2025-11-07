@@ -12,6 +12,14 @@ type Options interface {
 	AddFlags(fs *pflag.FlagSet)
 }
 
+// Usage is an interface representing an entity capable of producing a usage
+// string via the Usage method.
+type Usage interface {
+	Usage() string
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 // Validation defines an interface for objects that can be validated based on
 // an OptionSet  within a given context.
 // Optionally, the given context as well as the other options in the OptionSet
@@ -20,12 +28,6 @@ type Options interface {
 // ValidationSet to assert they are already validated before used.
 type Validation interface {
 	Validate(ctx context.Context, opts OptionSet, v ValidationSet) error
-}
-
-// Usage is an interface representing an entity capable of producing a usage
-// string via the Usage method.
-type Usage interface {
-	Usage() string
 }
 
 // ValidationSet is a set of Validation elements that ensures each element
@@ -59,10 +61,39 @@ func ValidatedOptions[O any](ctx context.Context, opts OptionSet, s ValidationSe
 	return o, nil
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+// Finalizable represents a type that can perform a finalization operation with
+// a context and a set of options. Options keeping external state should implement
+// this interface.
+type Finalizable interface {
+	Finalize(ctx context.Context, opts OptionSet, v FinalizationSet) error
+}
+
+// FinalizationSet is a set of finalization elements that ensures each element
+// is finalized only once within a context. It keeps a set of already
+// finalized objects. If there are cyclic finalizations, only the first call
+// finalizes the object. The order therefore depends on the order of the
+// executed initial finalizations, No error is provided for such cyclic scenarios.
+type FinalizationSet set.Set[Finalizable]
+
+func (s FinalizationSet) Finalize(ctx context.Context, opts OptionSet, o any) error {
+	if v, ok := o.(Finalizable); ok {
+		if !set.Set[Finalizable](s).Has(v) {
+			set.Set[Finalizable](s).Add(v)
+			return v.Finalize(ctx, opts, s)
+		}
+	}
+	return nil
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 type OptionBase[T Options] struct {
 	self  T
 	long  *string
 	short *string
+	desc  *string
 }
 
 func NewBase[T Options](self T) OptionBase[T] {
@@ -83,8 +114,20 @@ func (o *OptionBase[T]) Short(def string) string {
 	return *o.short
 }
 
+func (o *OptionBase[T]) Desc(def string) string {
+	if o.desc == nil {
+		return def
+	}
+	return *o.desc
+}
+
 func (o *OptionBase[T]) WithNames(l, s string) T {
 	o.long = &l
 	o.short = &s
+	return o.self
+}
+
+func (o *OptionBase[T]) WithDescription(s string) T {
+	o.desc = &s
 	return o.self
 }

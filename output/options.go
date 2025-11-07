@@ -40,7 +40,7 @@ func New[I any](out OutputsFactory[I]) *Options[I] {
 func (o *Options[I]) AddFlags(fs *pflag.FlagSet) {
 	keys := o.factory.GetModes()
 	if len(keys) > 0 {
-		fs.StringVarP(&o.mode, o.Long("mode"), o.Short("o"), "", fmt.Sprintf("DefaultOutput mode (%s)", strings.Join(keys, ", ")))
+		fs.StringVarP(&o.mode, o.Long("mode"), o.Short("o"), "", fmt.Sprintf(o.Desc("output mode (%s)"), strings.Join(keys, ", ")))
 	}
 }
 

@@ -12,35 +12,35 @@ import (
 	"strings"
 )
 
-type Factory struct {
+type Factory[F FieldProvider] struct {
 	Headers []string
 	Options *Options
 }
 
-var _ streaming.ProcessorFactory[output.ElementSpecs, int, FieldProvider] = (*Factory)(nil)
+var _ streaming.ProcessorFactory[output.ElementSpecs, int, FieldProvider] = (*Factory[FieldProvider])(nil)
 
-func (o *Factory) Processor(output.ElementSpecs) (streaming.Processor[int, FieldProvider], error) {
-	return newProcessor(o).Process, nil
+func (o *Factory[F]) Processor(output.ElementSpecs) (streaming.Processor[int, F], error) {
+	return newProcessor[F](o).Process, nil
 }
 
-type Processor struct {
-	output *Factory
+type Processor[F FieldProvider] struct {
+	output *Factory[F]
 	data   [][]string
 }
 
 var (
-	_ streaming.Processor[int, FieldProvider] = (*Processor)(nil).Process
+	_ streaming.Processor[int, FieldProvider] = (*Processor[FieldProvider])(nil).Process
 )
 
-func newProcessor(o *Factory) *Processor {
-	return &Processor{
+func newProcessor[F FieldProvider](o *Factory[F]) *Processor[F] {
+	return &Processor[F]{
 		output: o,
 	}
 
 }
 
-func (p *Processor) Process(ctx context.Context, i iter.Seq[FieldProvider]) (int, error) {
-	p.data = sliceutils.Transform(iterutils.Get(i), func(e FieldProvider) []string { return e.GetFields() })
+func (p *Processor[F]) Process(ctx context.Context, i iter.Seq[F]) (int, error) {
+	p.data = sliceutils.Transform(iterutils.Get(i), func(e F) []string { return e.GetFields() })
 
 	if len(p.data) == 0 {
 		out.Print(ctx, "no elements found\n")
@@ -54,7 +54,7 @@ func (p *Processor) Process(ctx context.Context, i iter.Seq[FieldProvider]) (int
 	return len(p.data), nil
 }
 
-func (p *Processor) optimizeColumns() []string {
+func (p *Processor[F]) optimizeColumns() []string {
 	headers := p.output.Headers
 	if len(p.data) < 2 {
 		return headers

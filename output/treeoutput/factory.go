@@ -24,7 +24,7 @@ type Element[K, I comparable] interface {
 // identity, and field data for processing elements providing access
 // to the base object of type O.
 type TreeElement[K, I comparable, O Element[K, I]] interface {
-	output.ExtendedFieldProvider
+	output.ExtendableFieldProvider
 	Element[K, I]
 	GetElement() O
 }

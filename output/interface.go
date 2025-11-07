@@ -8,7 +8,7 @@ type Fields = internal.Fields
 
 type FieldNameProvider = internal.FieldNameProvider
 type FieldProvider = internal.FieldProvider
-type ExtendedFieldProvider = internal.ExtendedFieldProvider
+type ExtendableFieldProvider = internal.ExtendedFieldProvider
 type ElementSpecs = internal.ElementSpecs
 type Result = internal.Result
 

@@ -21,6 +21,11 @@ func (f FieldExtenderFunc[I, F]) Extend(o I, in F) F {
 	return f(o, in)
 }
 
+// HierarchyMappingProvider is a output.MappingProvider for managing hierarchical
+// information of processed input elements when mapping those elements to display
+// fields. It checks the closure.Options
+// in an option list to optionally extend the field list by the nesting information
+// of handled elements.
 type HierarchyMappingProvider[I any, F FieldProvider] struct {
 	name     string
 	mapper   chain.Mapper[I, F]
@@ -46,10 +51,13 @@ func (h *HierarchyMappingProvider[I, F]) GetMapping(opts flagutils.OptionSetProv
 
 ////////////////////////////////////////////////////////////////////////////////
 
-func NewStandardHierarchyMappingProvider[I any, F ExtendedFieldProvider](name string, mapper chain.Mapper[I, F], extract chain.Mapper[I, []string], headers ...string) *HierarchyMappingProvider[I, F] {
+func NewStandardHierarchyMappingProvider[I any, F ExtendableFieldProvider](name string, mapper chain.Mapper[I, F], extract chain.Mapper[I, []string], headers ...string) *HierarchyMappingProvider[I, F] {
 	return NewHierarchyMappingProvider[I, F](name, mapper, FieldExtenderFunc[I, F](func(o I, in F) F { in.InsertFields(0, extract(o)...); return in }), headers...)
 }
 
-func NewTopoHierarchMappingProvider[K comparable, I history.HistoryProvider[K], F ExtendedFieldProvider](name string, mapper chain.Mapper[I, F], headers ...string) *HierarchyMappingProvider[I, F] {
-	return NewHierarchyMappingProvider[I, F](name, mapper, FieldExtenderFunc[I, F](func(o I, in F) F { in.InsertFields(0, o.GetHistory().String()); return in }), headers...)
+func NewTopoHierarchMappingProvider[K comparable, I history.HistoryProvider[K], F ExtendableFieldProvider](name string, sep string, mapper chain.Mapper[I, F], headers ...string) *HierarchyMappingProvider[I, F] {
+	if sep == "" {
+		sep = "->"
+	}
+	return NewHierarchyMappingProvider[I, F](name, mapper, FieldExtenderFunc[I, F](func(o I, in F) F { in.InsertFields(0, o.GetHistory().Join(sep)); return in }), headers...)
 }

@@ -39,7 +39,7 @@ func New() *Options {
 }
 
 func (o *Options) AddFlags(fs *pflag.FlagSet) {
-	fs.StringSliceVarP(&o.sortFields, o.Long("sort"), o.Short("s"), []string{}, "sort fields")
+	fs.StringSliceVarP(&o.sortFields, o.Long("sort"), o.Short("s"), []string{}, o.Desc("sort fields"))
 }
 
 func (o *Options) AddComparator(name string, cmp general.CompareFunc[string]) *Options {

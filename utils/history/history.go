@@ -25,6 +25,15 @@ func (h History[T]) String() string {
 	}
 	return s
 }
+func (h History[T]) Join(separator string) string {
+	s := ""
+	sep := ""
+	for _, e := range h {
+		s = fmt.Sprintf("%s%s%s", s, sep, asString(e))
+		sep = separator
+	}
+	return s
+}
 
 func (h History[T]) Contains(c T) bool {
 	for _, e := range h {

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/mandelsoft/flagutils/parallel"
 	"os"
 
 	"github.com/spf13/pflag"
@@ -25,7 +26,8 @@ func main() {
 	opts := flagutils.DefaultOptionSet{}
 	opts.Add(
 		files.New(),
-		closure.New[*files.Element](files.Closure),
+		parallel.New(),
+		closure.NewByFactory[*files.Element](files.ClosureFactory),
 		sort.New(),
 		tableoutput.New(),
 		output.New(files.OutputsFactory),
@@ -34,9 +36,12 @@ func main() {
 	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
 	opts.AddFlags(fs)
 
-	err := fs.Parse([]string{"-c", "-s", "name", "output", "examples", "-o", "tree"})
+	// err := fs.Parse([]string{"-c", "-s", "name", "output", "examples", "-o", "tree"})
+	// err := fs.Parse([]string{"-c", "-s", "name", "output", "examples", "-o", "test"})
 	// err := fs.Parse([]string{"-c", "-s", "name", "output", "examples", "-o", "wide"})
-	//err := fs.Parse([]string{"-c", "output", "examples", "-o", "YAML"})
+	// err := fs.Parse([]string{"-p", "3", "-c", "-s", "name", "output", "examples", "-o", "wide"})
+	err := fs.Parse([]string{"-p", "6", "-c", "output", "examples", "-o", "wide"})
+	// err := fs.Parse([]string{"-c", "output", "examples", "-o", "YAML"})
 	if err != nil {
 		Error("%s", err)
 	}
@@ -53,4 +58,5 @@ func main() {
 		Error("%s", err)
 	}
 	fmt.Printf("processed %d files\n", n)
+	flagutils.Finalize(ctx, opts, nil)
 }

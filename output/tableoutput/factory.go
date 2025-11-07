@@ -12,14 +12,18 @@ import (
 )
 
 type FieldProvider = output.FieldProvider
-type ExtendedFieldProvider = output.ExtendedFieldProvider
+type ExtendableFieldProvider = output.ExtendableFieldProvider
 
-func NewOutputFactory[I any](mapper chain.Mapper[I, FieldProvider], headers ...string) *OutputFactory[I, FieldProvider] {
-	return &OutputFactory[I, FieldProvider]{mapper: mapper, chain: chain.New[FieldProvider](), headers: slices.Clone(headers)}
+func Cast[O, I any](o I) O {
+	return any(o).(O)
 }
 
-func NewOutputFactoryByProvider[I any](provider HierarchyMappingProvider[I, FieldProvider]) *OutputFactory[I, FieldProvider] {
-	return &OutputFactory[I, FieldProvider]{provider: provider, chain: chain.New[FieldProvider]()}
+func NewOutputFactory[I any, F FieldProvider](mapper chain.Mapper[I, F], headers ...string) *OutputFactory[I, F] {
+	return &OutputFactory[I, F]{mapper: mapper, chain: chain.Mapped[F, FieldProvider](Cast[FieldProvider, F]), headers: slices.Clone(headers)}
+}
+
+func NewOutputFactoryByProvider[I any, F FieldProvider](provider *HierarchyMappingProvider[I, F]) *OutputFactory[I, F] {
+	return &OutputFactory[I, F]{provider: provider, chain: chain.Mapped[F, FieldProvider](Cast[FieldProvider, F])}
 }
 
 func NewExtendedOutputFactory[I any, F FieldProvider](mapper chain.Mapper[I, F], chain chain.Chain[F, FieldProvider], headers ...string) *OutputFactory[I, F] {
@@ -27,7 +31,7 @@ func NewExtendedOutputFactory[I any, F FieldProvider](mapper chain.Mapper[I, F],
 }
 
 type OutputFactory[I any, F FieldProvider] struct {
-	provider HierarchyMappingProvider[I, F]
+	provider *HierarchyMappingProvider[I, F]
 	mapper   chain.Mapper[I, F]
 	chain    chain.Chain[F, FieldProvider]
 	headers  []string
@@ -39,7 +43,7 @@ func (o *OutputFactory[I, F]) GetMapper() chain.Mapper[I, F] {
 	return o.mapper
 }
 
-func (o *OutputFactory[I, F]) GetProvider() HierarchyMappingProvider[I, F] {
+func (o *OutputFactory[I, F]) GetProvider() *HierarchyMappingProvider[I, F] {
 	return o.provider
 }
 
@@ -68,10 +72,9 @@ func (o *OutputFactory[I, F]) Create(ctx context.Context, opts flagutils.OptionS
 		}
 	}
 	mapper := o.mapper
-	headers := o.headers
 	if mapper == nil {
 		var err error
-		mapper, headers, err = o.provider.GetMapping(opts)
+		mapper, o.headers, err = o.provider.GetMapping(opts)
 		if err != nil {
 			return nil, err
 		}
@@ -83,5 +86,5 @@ func (o *OutputFactory[I, F]) Create(ctx context.Context, opts flagutils.OptionS
 	}
 
 	co := chain.AddChain(mapped, o.chain)
-	return output.NewOutput[I, FieldProvider](co, &Factory{slices.Clone(headers), From(opts)}), nil
+	return output.NewOutput[I, FieldProvider](co, &Factory[FieldProvider]{slices.Clone(o.headers), From(opts)}), nil
 }

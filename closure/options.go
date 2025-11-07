@@ -40,7 +40,7 @@ func NewByFactory[I any](exploder ExploderFactory[I]) *Options[I] {
 }
 
 func (o *Options[I]) AddFlags(fs *pflag.FlagSet) {
-	fs.BoolVarP(&o.closure, "closure", "c", false, "calculate closure")
+	fs.BoolVarP(&o.closure, "closure", "c", false, o.Desc("calculate closure"))
 }
 
 func (o *Options[I]) GetExploderFactory(opts flagutils.OptionSetProvider) chain.ExploderFactory[I, I] {

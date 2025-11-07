@@ -166,3 +166,29 @@ func Validate(ctx context.Context, set OptionSetProvider, val ValidationSet) err
 	}
 	return nil
 }
+
+// Finalize checks whether the provided OptionSetProvider or its nested options
+// implement the Finalizable interface and finalizes them.
+// It returns an error if any finalization fails or nil if all finalizations succeed.
+func Finalize(ctx context.Context, set OptionSetProvider, val FinalizationSet) error {
+	if val == nil {
+		val = FinalizationSet{}
+	}
+	base := set.AsOptionSet()
+	if v, ok := set.(Finalizable); ok {
+		err := v.Finalize(ctx, base, val)
+		if err != nil {
+			return err
+		}
+	} else {
+		for o := range set.AsOptionSet().Options {
+			if v, ok := o.(Finalizable); ok {
+				err := v.Finalize(ctx, base, val)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
