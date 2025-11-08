@@ -2,6 +2,7 @@ package flagutils
 
 import (
 	"context"
+	"github.com/mandelsoft/goutils/iterutils"
 	"github.com/spf13/pflag"
 	"reflect"
 )
@@ -19,6 +20,11 @@ type OptionSet interface {
 	Options(yield func(Options) bool)
 }
 
+type ExtendableOptionSet interface {
+	OptionSet
+	Add(o ...Options) ExtendableOptionSet
+}
+
 // DefaultOptionSet defines a slice of Options, representing a basic
 // implementation of an OptionSet.
 type DefaultOptionSet []Options
@@ -27,9 +33,9 @@ func (s DefaultOptionSet) AsOptionSet() OptionSet {
 	return s
 }
 
-var _ OptionSet = (*DefaultOptionSet)(nil)
+var _ ExtendableOptionSet = (*DefaultOptionSet)(nil)
 
-func (s *DefaultOptionSet) Add(o ...Options) *DefaultOptionSet {
+func (s *DefaultOptionSet) Add(o ...Options) ExtendableOptionSet {
 	*s = append(*s, o...)
 	return s
 }
@@ -142,21 +148,21 @@ func Filter[T any](set OptionSetProvider) []T {
 }
 
 // Validate checks whether the provided OptionSetProvider or its nested options
-// implement the Validation interface and validates them.
+// implement the Validatable interface and validates them.
 // It returns an error if any validation fails or nil if all validations succeed.
 func Validate(ctx context.Context, set OptionSetProvider, val ValidationSet) error {
 	if val == nil {
 		val = ValidationSet{}
 	}
 	base := set.AsOptionSet()
-	if v, ok := set.(Validation); ok {
+	if v, ok := set.(Validatable); ok {
 		err := v.Validate(ctx, base, val)
 		if err != nil {
 			return err
 		}
 	} else {
 		for o := range set.AsOptionSet().Options {
-			if v, ok := o.(Validation); ok {
+			if v, ok := o.(Validatable); ok {
 				err := v.Validate(ctx, base, val)
 				if err != nil {
 					return err
@@ -181,7 +187,7 @@ func Finalize(ctx context.Context, set OptionSetProvider, val FinalizationSet) e
 			return err
 		}
 	} else {
-		for o := range set.AsOptionSet().Options {
+		for o := range iterutils.Reverse(set.AsOptionSet().Options) {
 			if v, ok := o.(Finalizable); ok {
 				err := v.Finalize(ctx, base, val)
 				if err != nil {

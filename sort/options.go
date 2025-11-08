@@ -11,14 +11,13 @@ import (
 	"github.com/mandelsoft/flagutils"
 	"github.com/mandelsoft/flagutils/output"
 	"github.com/mandelsoft/streaming/chain"
-	"github.com/spf13/pflag"
 )
 
 const FIELD_MODE_SORT = "<sort>"
 
 type Options struct {
-	flagutils.OptionBase[*Options]
-	sortFields  []string
+	flagutils.SimpleOption[[]string, *Options]
+
 	fieldInfos  []*fieldInfo
 	comparators map[string]general.CompareFunc[string]
 }
@@ -28,21 +27,17 @@ func From(opts flagutils.OptionSetProvider) *Options {
 }
 
 var (
-	_ flagutils.Options    = (*Options)(nil)
-	_ flagutils.Validation = (*Options)(nil)
+	_ flagutils.Options     = (*Options)(nil)
+	_ flagutils.Validatable = (*Options)(nil)
 )
 
 func New() *Options {
 	o := &Options{comparators: make(map[string]general.CompareFunc[string])}
-	o.OptionBase = flagutils.NewBase(o)
+	o.SimpleOption = flagutils.NewSimpleOption[[]string](o, nil, "sort", "s", "sort fields")
 	return o
 }
 
-func (o *Options) AddFlags(fs *pflag.FlagSet) {
-	fs.StringSliceVarP(&o.sortFields, o.Long("sort"), o.Short("s"), []string{}, o.Desc("sort fields"))
-}
-
-func (o *Options) AddComparator(name string, cmp general.CompareFunc[string]) *Options {
+func (o *Options) WithComparator(name string, cmp general.CompareFunc[string]) *Options {
 	o.comparators[strings.ToLower(name)] = cmp
 	return o
 }
@@ -58,11 +53,12 @@ type fieldInfo struct {
 }
 
 func (o *Options) Validate(ctx context.Context, opts flagutils.OptionSet, v flagutils.ValidationSet) error {
-	if len(o.sortFields) == 0 {
+	sortFields := o.Value()
+	if len(sortFields) == 0 {
 		return nil
 	}
-	for i, v := range o.sortFields {
-		o.sortFields[i] = strings.ToLower(v)
+	for i, v := range sortFields {
+		sortFields[i] = strings.ToLower(v)
 	}
 
 	fields, err := flagutils.ValidatedOptions[output.FieldNameProvider](ctx, opts, v)
@@ -71,18 +67,18 @@ func (o *Options) Validate(ctx context.Context, opts flagutils.OptionSet, v flag
 	}
 
 	if fields == nil {
-		return fmt.Errorf("invalid sort fields: %v", o.sortFields)
+		return fmt.Errorf("invalid sort fields: %v", sortFields)
 	}
 	names := fields.GetFieldNames(FIELD_MODE_SORT)
 	if names == nil {
-		return fmt.Errorf("invalid sort fields: %v", o.sortFields)
+		return fmt.Errorf("invalid sort fields: %v", sortFields)
 	}
 	for i, n := range names {
 		names[i] = strings.ToLower(n)
 	}
 
 	var wrong []string
-	for _, v := range o.sortFields {
+	for _, v := range sortFields {
 		order := 1
 		if strings.HasPrefix(v, "-") {
 			order = -1
@@ -110,7 +106,7 @@ func (o *Options) Validate(ctx context.Context, opts flagutils.OptionSet, v flag
 
 func AddSortChain[I any, F output.FieldProvider](c chain.Chain[I, F], opts *Options) chain.Chain[I, F] {
 	return chain.AddConditional(c,
-		func(context.Context) bool { return opts != nil && len(opts.sortFields) != 0 },
+		func(context.Context) bool { return opts != nil && len(opts.Value()) != 0 },
 		chain.Sorted[F](func(a, b F) int { return opts.Compare(a, b) }),
 	)
 }

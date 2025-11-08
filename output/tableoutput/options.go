@@ -10,34 +10,47 @@ func From(opts flagutils.OptionSetProvider) *Options {
 }
 
 type Options struct {
-	flagutils.OptionBase[*Options]
 	optimizedColumns int
-	columns          []string
-	allColumns       bool
+	columns          flagutils.SimpleOption[[]string, *Options]
+	allColumns       flagutils.SimpleOption[bool, *Options]
 }
 
 func New() *Options {
 	o := &Options{}
-	o.OptionBase = flagutils.NewBase(o)
+	o.columns = flagutils.NewSimpleOption[[]string](o, nil, "columns", "", "show selected columns")
+	o.allColumns = flagutils.NewSimpleOption[bool](o, false, "all-columns", "", "show all table columns")
 	return o
 }
 
-func (o *Options) OptimizeColumns(n int) *Options {
+func (o *Options) WithOptimizedColumns(n int) *Options {
 	o.optimizedColumns = n
 	return o
 }
 
-func (o *Options) Columns(c ...string) *Options {
-	o.columns = append(o.columns, c...)
+func (o *Options) WithColumnsNames(long, short string) *Options {
+	return o.columns.WithNames(long, short)
+}
+func (o *Options) WithColumnsDescription(s string) *Options {
+	return o.columns.WithDescription(s)
+}
+func (o *Options) WithAllColumnsNames(long, short string) *Options {
+	return o.allColumns.WithNames(long, short)
+}
+func (o *Options) WithALlColumnsDescription(s string) *Options {
+	return o.allColumns.WithDescription(s)
+}
+
+func (o *Options) AddColumns(c ...string) *Options {
+	o.columns.Set(append(o.columns.Value(), c...))
 	return o
 }
 
 func (o *Options) UseAllColumns() bool {
-	return o.allColumns
+	return o.allColumns.Value()
 }
 
 func (o *Options) UseColumnOptimization() bool {
-	return o.optimizedColumns > 0 && !o.allColumns
+	return o.optimizedColumns > 0 && !o.allColumns.Value()
 }
 
 func (o *Options) GetOptimizedColumns() int {
@@ -48,12 +61,12 @@ func (o *Options) GetOptimizedColumns() int {
 }
 
 func (o *Options) UseColumns() []string {
-	return o.columns
+	return o.columns.Value()
 }
 
 func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	if o.optimizedColumns > 0 {
-		fs.BoolVarP(&o.allColumns, "all-columns", "", false, "show all table columns")
+		o.allColumns.AddFlags(fs)
 	}
-	fs.StringSliceVarP(&o.columns, o.Long("columns"), o.Short(""), nil, "show selected columns, only")
+	o.columns.AddFlags(fs)
 }

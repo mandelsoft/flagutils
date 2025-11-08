@@ -8,14 +8,11 @@ import (
 	"github.com/mandelsoft/goutils/general"
 	"github.com/mandelsoft/streaming/processing"
 	"github.com/mandelsoft/streaming/simplepool"
-	"github.com/spf13/pflag"
 )
 
 type Options struct {
-	flagutils.OptionBase[*Options]
+	flagutils.SimpleOption[int, *Options]
 	poolprovider PoolProvider
-
-	n int
 
 	pool processing.Processing
 }
@@ -26,15 +23,15 @@ func From(opts flagutils.OptionSetProvider) *Options {
 
 var (
 	_ flagutils.Options     = (*Options)(nil)
-	_ flagutils.Validation  = (*Options)(nil)
+	_ flagutils.Validatable = (*Options)(nil)
 	_ flagutils.Finalizable = (*Options)(nil)
 )
 
 type PoolProvider func(ctx context.Context, n int) processing.Processing
 
 func New(n ...int) *Options {
-	o := &Options{n: general.Optional(n...)}
-	o.OptionBase = flagutils.NewBase(o)
+	o := &Options{}
+	o.SimpleOption = flagutils.NewSimpleOption[int](o, general.Optional(n...), "parallel", "p", "degree of parallelism")
 	return o
 }
 
@@ -43,23 +40,20 @@ func (o *Options) WithPoolProvider(p PoolProvider) *Options {
 	return o
 }
 
-func (o *Options) AddFlags(fs *pflag.FlagSet) {
-	fs.IntVarP(&o.n, o.Long("parallel"), o.Short("p"), o.n, o.Desc("degree of parallelism"))
-}
-
 func (o *Options) GetPool() processing.Processing {
 	return o.pool
 }
 
 func (o *Options) Validate(ctx context.Context, opts flagutils.OptionSet, v flagutils.ValidationSet) error {
-	if o.n < 0 {
-		return fmt.Errorf("invalid degree of parallelism: %d", o.n)
+	n := o.Value()
+	if n < 0 {
+		return fmt.Errorf("invalid degree of parallelism: %d", n)
 	}
 	if o.pool == nil {
 		if o.poolprovider != nil {
-			o.pool = o.poolprovider(ctx, o.n)
+			o.pool = o.poolprovider(ctx, n)
 		} else {
-			o.pool = simplepool.New(ctx, o.n)
+			o.pool = simplepool.New(ctx, n)
 		}
 	}
 	return nil

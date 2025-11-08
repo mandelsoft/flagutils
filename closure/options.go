@@ -4,18 +4,15 @@ import (
 	"context"
 	"github.com/mandelsoft/flagutils"
 	"github.com/mandelsoft/streaming/chain"
-	"github.com/spf13/pflag"
 )
 
 type Options[I any] struct {
-	flagutils.OptionBase[*Options[I]]
-	closure  bool
+	flagutils.SimpleOption[bool, *Options[I]]
 	exploder ExploderFactory[I]
 }
 
 func From[I any](opts flagutils.OptionSetProvider) *Options[I] {
 	o := flagutils.GetFrom[*Options[I]](opts)
-	o.OptionBase = flagutils.NewBase(o)
 	return o
 }
 
@@ -32,19 +29,17 @@ func ExploderFactoryFor[I any](e chain.Exploder[I, I]) ExploderFactory[I] {
 }
 
 func New[I any](exploder chain.Exploder[I, I]) *Options[I] {
-	return &Options[I]{exploder: ExploderFactoryFor[I](exploder)}
+	return NewByFactory[I](ExploderFactoryFor[I](exploder))
 }
 
 func NewByFactory[I any](exploder ExploderFactory[I]) *Options[I] {
-	return &Options[I]{exploder: exploder}
-}
-
-func (o *Options[I]) AddFlags(fs *pflag.FlagSet) {
-	fs.BoolVarP(&o.closure, "closure", "c", false, o.Desc("calculate closure"))
+	o := &Options[I]{exploder: exploder}
+	o.SimpleOption = flagutils.NewSimpleOption(o, false, "closure", "c", "calculate closure")
+	return o
 }
 
 func (o *Options[I]) GetExploderFactory(opts flagutils.OptionSetProvider) chain.ExploderFactory[I, I] {
-	if !o.closure || o.exploder == nil {
+	if !o.Value() || o.exploder == nil {
 		return nil
 	}
 	return o.exploder(opts)
@@ -53,7 +48,7 @@ func (o *Options[I]) GetExploderFactory(opts flagutils.OptionSetProvider) chain.
 func AddExploderChain[I, O any](c chain.Chain[I, O], opts flagutils.OptionSetProvider) chain.Chain[I, O] {
 	o := From[O](opts)
 	return chain.AddConditional(c,
-		func(context.Context) bool { return o != nil && o.closure },
+		func(context.Context) bool { return o != nil && o.Value() },
 		chain.ExplodedByFactory(o.GetExploderFactory(opts)),
 	)
 }
