@@ -22,7 +22,7 @@ func NewOutputFactory[I any, F FieldProvider](mapper chain.Mapper[I, F], headers
 	return &OutputFactory[I, F]{mapper: mapper, chain: chain.Mapped[F, FieldProvider](Cast[FieldProvider, F]), headers: slices.Clone(headers)}
 }
 
-func NewOutputFactoryByProvider[I any, F FieldProvider](provider *HierarchyMappingProvider[I, F]) *OutputFactory[I, F] {
+func NewOutputFactoryByProvider[I any, F FieldProvider](provider output.MappingProvider[I, F]) *OutputFactory[I, F] {
 	return &OutputFactory[I, F]{provider: provider, chain: chain.Mapped[F, FieldProvider](Cast[FieldProvider, F])}
 }
 
@@ -31,7 +31,7 @@ func NewExtendedOutputFactory[I any, F FieldProvider](mapper chain.Mapper[I, F],
 }
 
 type OutputFactory[I any, F FieldProvider] struct {
-	provider *HierarchyMappingProvider[I, F]
+	provider output.MappingProvider[I, F]
 	mapper   chain.Mapper[I, F]
 	chain    chain.Chain[F, FieldProvider]
 	headers  []string
@@ -43,7 +43,7 @@ func (o *OutputFactory[I, F]) GetMapper() chain.Mapper[I, F] {
 	return o.mapper
 }
 
-func (o *OutputFactory[I, F]) GetProvider() *HierarchyMappingProvider[I, F] {
+func (o *OutputFactory[I, F]) GetProvider() output.MappingProvider[I, F] {
 	return o.provider
 }
 

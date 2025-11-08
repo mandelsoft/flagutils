@@ -2,6 +2,7 @@ package manifest
 
 import (
 	"context"
+	"github.com/mandelsoft/flagutils/closure"
 	"github.com/mandelsoft/streaming/chain"
 
 	"github.com/mandelsoft/flagutils"
@@ -23,7 +24,15 @@ func (o *OutputFactory[I]) GetFieldNames(string) []string {
 }
 
 func (o *OutputFactory[I]) Create(ctx context.Context, opts flagutils.OptionSetProvider, v flagutils.ValidationSet) (output.Output[I], error) {
-	return output.NewOutput[I, I](chain.New[I](), &Factory[I]{o}), nil
+	c := chain.New[I]()
+	e := closure.From[I](opts)
+	if e != nil {
+		f := e.GetExploderFactory(opts)
+		if f != nil {
+			c = chain.AddExplodeByFactory[I](c, f)
+		}
+	}
+	return output.NewOutput[I, I](c, &Factory[I]{o}), nil
 }
 
 func AddManifestOutputs[I any](out output.OutputsFactory[I]) output.OutputsFactory[I] {
