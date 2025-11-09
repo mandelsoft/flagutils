@@ -49,7 +49,7 @@ func (o *Options) Validate(ctx context.Context, opts flagutils.OptionSet, v flag
 	if n < 0 {
 		return fmt.Errorf("invalid degree of parallelism: %d", n)
 	}
-	if o.pool == nil {
+	if o.pool == nil && n > 1 {
 		if o.poolprovider != nil {
 			o.pool = o.poolprovider(ctx, n)
 		} else {

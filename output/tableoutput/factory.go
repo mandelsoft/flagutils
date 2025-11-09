@@ -59,18 +59,9 @@ func (o *OutputFactory[I, F]) GetFieldNames(stage string) []string {
 		}
 	}
 	return fields
+
 }
-
-func (o *OutputFactory[I, F]) Create(ctx context.Context, opts flagutils.OptionSetProvider, v flagutils.ValidationSet) (output.Output[I], error) {
-	c := chain.New[I]()
-
-	e := closure.From[I](opts)
-	if e != nil {
-		f := e.GetExploderFactory(opts)
-		if f != nil {
-			c = chain.AddExplodeByFactory[I](c, f)
-		}
-	}
+func (o *OutputFactory[I, F]) getMapper(opts flagutils.OptionSetProvider) (chain.Mapper[I, F], error) {
 	mapper := o.mapper
 	if mapper == nil {
 		var err error
@@ -79,12 +70,18 @@ func (o *OutputFactory[I, F]) Create(ctx context.Context, opts flagutils.OptionS
 			return nil, err
 		}
 	}
-	mapped := chain.AddMap[F](c, mapper)
-	s := sort.From(opts)
-	if s != nil {
-		mapped = sort.AddSortChain[I, F](mapped, s)
+	return mapper, nil
+}
+
+func (o *OutputFactory[I, F]) Create(ctx context.Context, opts flagutils.OptionSetProvider, v flagutils.ValidationSet) (output.Output[I], error) {
+	mapper, err := o.getMapper(opts)
+	if err != nil {
+		return nil, err
 	}
 
+	// compose chain: exploder -> mapper -> sort -> custom chain
+	c := closure.AddExplodeChain(opts, chain.New[I]())
+	mapped := sort.AddSortChain[I, F](opts, chain.AddMap[F](c, mapper))
 	co := chain.AddChain(mapped, o.chain)
 	return output.NewOutput[I, FieldProvider](co, &Factory[FieldProvider]{slices.Clone(o.headers), From(opts)}), nil
 }

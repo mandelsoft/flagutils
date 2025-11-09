@@ -24,15 +24,8 @@ func (o *OutputFactory[I]) GetFieldNames(string) []string {
 }
 
 func (o *OutputFactory[I]) Create(ctx context.Context, opts flagutils.OptionSetProvider, v flagutils.ValidationSet) (output.Output[I], error) {
-	c := chain.New[I]()
-	e := closure.From[I](opts)
-	if e != nil {
-		f := e.GetExploderFactory(opts)
-		if f != nil {
-			c = chain.AddExplodeByFactory[I](c, f)
-		}
-	}
-	return output.NewOutput[I, I](c, &Factory[I]{o}), nil
+	c := closure.AddExplodeChain(opts, chain.New[I]())
+	return output.NewOutput[I, Manifest](chain.AddMap[Manifest](c, mapToManifest), &Factory{o.formatter}), nil
 }
 
 func AddManifestOutputs[I any](out output.OutputsFactory[I]) output.OutputsFactory[I] {

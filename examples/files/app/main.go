@@ -40,8 +40,8 @@ func main() {
 	// err := fs.Parse([]string{"-c", "-s", "name", "output", "examples", "-o", "test"})
 	// err := fs.Parse([]string{"-c", "-s", "name", "output", "examples", "-o", "wide"})
 	// err := fs.Parse([]string{"-p", "3", "-c", "-s", "name", "output", "examples", "-o", "wide"})
-	err := fs.Parse([]string{"-p", "6", "-c", "output", "examples", "-o", "wide"})
-	// err := fs.Parse([]string{"-c", "output", "examples", "-o", "YAML"})
+	//err := fs.Parse([]string{"-p", "6", "-c", "output", "examples", "-o", "wide"})
+	err := fs.Parse([]string{"-c", "output", "examples", "-o", "YAML"})
 	if err != nil {
 		Error("%s", err)
 	}

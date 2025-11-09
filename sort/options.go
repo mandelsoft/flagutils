@@ -10,7 +10,6 @@ import (
 
 	"github.com/mandelsoft/flagutils"
 	"github.com/mandelsoft/flagutils/output"
-	"github.com/mandelsoft/streaming/chain"
 )
 
 const FIELD_MODE_SORT = "<sort>"
@@ -102,13 +101,6 @@ func (o *Options) Validate(ctx context.Context, opts flagutils.OptionSet, v flag
 	}
 	slices.Reverse(o.fieldInfos)
 	return nil
-}
-
-func AddSortChain[I any, F output.FieldProvider](c chain.Chain[I, F], opts *Options) chain.Chain[I, F] {
-	return chain.AddConditional(c,
-		func(context.Context) bool { return opts != nil && len(opts.Value()) != 0 },
-		chain.Sorted[F](func(a, b F) int { return opts.Compare(a, b) }),
-	)
 }
 
 func (o *Options) Compare(af, bf output.FieldProvider) int {

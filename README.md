@@ -23,7 +23,7 @@ You can configure sets of options like this
 
 ```go
   opts:= flagutils.DefaultOptionSet{}
-  opts.Add(otype1.New(), optype2.New(), ...)
+  opts.Add(otype1.New(), otype2.New(), ...)
 ```
 
 To add the options to a `pflag.FlagSet` just use

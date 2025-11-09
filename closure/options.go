@@ -1,7 +1,6 @@
 package closure
 
 import (
-	"context"
 	"github.com/mandelsoft/flagutils"
 	"github.com/mandelsoft/streaming/chain"
 )
@@ -43,12 +42,4 @@ func (o *Options[I]) GetExploderFactory(opts flagutils.OptionSetProvider) chain.
 		return nil
 	}
 	return o.exploder(opts)
-}
-
-func AddExploderChain[I, O any](c chain.Chain[I, O], opts flagutils.OptionSetProvider) chain.Chain[I, O] {
-	o := From[O](opts)
-	return chain.AddConditional(c,
-		func(context.Context) bool { return o != nil && o.Value() },
-		chain.ExplodedByFactory(o.GetExploderFactory(opts)),
-	)
 }
