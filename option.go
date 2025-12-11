@@ -49,6 +49,8 @@ func (s ValidationSet) Validate(ctx context.Context, opts OptionSet, o any) erro
 	return nil
 }
 
+// ValidatedOptions provides a validated Options object of the given type.
+// The type is typically a pointer type to the Options struct.
 func ValidatedOptions[O any](ctx context.Context, opts OptionSet, s ValidationSet) (O, error) {
 	var _nil O
 	o := GetFrom[O](opts)
@@ -60,6 +62,21 @@ func ValidatedOptions[O any](ctx context.Context, opts OptionSet, s ValidationSe
 		}
 	}
 	return o, nil
+}
+
+// ValidatedFilteredOptions filters an OptionSet for elements of type O and validates each element against a ValidationSet.
+// Returns the filtered and validated list of elements or an error if validation fails.
+// It is typically used with an interface type to get all Options objects implementing this interface.
+func ValidatedFilteredOptions[O any](ctx context.Context, opts OptionSet, s ValidationSet) ([]O, error) {
+	list := Filter[O](opts)
+
+	for _, o := range list {
+		err := s.Validate(ctx, opts, o)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return list, nil
 }
 
 ////////////////////////////////////////////////////////////////////////////////
