@@ -3,6 +3,7 @@ package flagutils
 import (
 	"context"
 	"github.com/mandelsoft/goutils/set"
+	"github.com/modern-go/reflect2"
 	"github.com/spf13/pflag"
 )
 
@@ -52,8 +53,7 @@ func ValidatedOptions[O any](ctx context.Context, opts OptionSet, s ValidationSe
 	var _nil O
 	o := GetFrom[O](opts)
 
-	var a any = o
-	if a != nil {
+	if !reflect2.IsNil(o) {
 		err := s.Validate(ctx, opts, o)
 		if err != nil {
 			return _nil, err

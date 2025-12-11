@@ -1,6 +1,8 @@
 package flagutils_test
 
 import (
+	"context"
+	"fmt"
 	"github.com/mandelsoft/flagutils"
 	"github.com/spf13/pflag"
 
@@ -14,6 +16,7 @@ type Interface interface {
 
 type TestOption struct {
 	Flag bool
+	Err  error
 }
 
 func (t *TestOption) Get() bool {
@@ -24,8 +27,29 @@ func (t *TestOption) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVarP(&t.Flag, "test", "t", false, "test flag")
 }
 
+func (t *TestOption) Validate(ctx context.Context, opts flagutils.OptionSet, v flagutils.ValidationSet) error {
+	if t.Flag {
+		return t.Err
+	}
+	return nil
+}
+
 type Test2Option struct {
-	Flag bool
+	Flag      bool
+	Propgated bool
+}
+
+var _ flagutils.Validatable = (*Test2Option)(nil)
+
+func (t *Test2Option) Validate(ctx context.Context, opts flagutils.OptionSet, v flagutils.ValidationSet) error {
+	o, err := flagutils.ValidatedOptions[*TestOption](ctx, opts, v)
+	if err != nil {
+		return err
+	}
+	if o != nil {
+		t.Propgated = o.Flag
+	}
+	return nil
 }
 
 func (t *Test2Option) AddFlags(fs *pflag.FlagSet) {
@@ -55,6 +79,14 @@ var _ = Describe("options", func() {
 	})
 
 	Context("simple option", func() {
+		It("retrieves empty", func() {
+			opt := flagutils.GetFrom[*TestOption](set)
+			Expect(opt).To(BeNil())
+			if opt != nil {
+				Fail("pointer is not nil")
+			}
+		})
+
 		It("skips unknown option", func() {
 			var opt *TestOption
 			Expect(flagutils.RetrieveFrom(set, opt)).To(BeFalse())
@@ -188,6 +220,33 @@ var _ = Describe("options", func() {
 
 			var opt *ParamOption[int]
 			Expect(flagutils.RetrieveFrom(set, &opt)).To(BeTrue())
+		})
+	})
+
+	Context("validation", func() {
+		It("validates simple", func() {
+			set.Add(&TestOption{Flag: false})
+			Expect(flagutils.Validate(context.Background(), set, nil)).To(Succeed())
+		})
+
+		It("fails simple", func() {
+			set.Add(&TestOption{Flag: true, Err: fmt.Errorf("error")})
+			Expect(flagutils.Validate(context.Background(), set, nil)).To(HaveOccurred())
+		})
+
+		It("validates nested", func() {
+			set.Add(&TestOption{Flag: true})
+			set.Add(&Test2Option{})
+
+			Expect(flagutils.Validate(context.Background(), set, nil)).To(Succeed())
+			Expect(flagutils.GetFrom[*Test2Option](set).Propgated).To(BeTrue())
+		})
+
+		It("handles missing options", func() {
+			set.Add(&Test2Option{})
+
+			Expect(flagutils.Validate(context.Background(), set, nil)).To(Succeed())
+			Expect(flagutils.GetFrom[*Test2Option](set).Propgated).To(BeFalse())
 		})
 	})
 })
