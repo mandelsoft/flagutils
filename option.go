@@ -2,6 +2,7 @@ package flagutils
 
 import (
 	"context"
+	"github.com/mandelsoft/goutils/iterutils"
 	"github.com/mandelsoft/goutils/set"
 	"github.com/modern-go/reflect2"
 	"github.com/spf13/pflag"
@@ -44,6 +45,31 @@ func (s ValidationSet) Validate(ctx context.Context, opts OptionSet, o any) erro
 		if !set.Set[Validatable](s).Has(v) {
 			set.Set[Validatable](s).Add(v)
 			return v.Validate(ctx, opts, s)
+		}
+	}
+	return nil
+}
+
+// ValidateSet validates the OptionSet givey an OptionSetProvider against a more
+// general OptionSet using the provided ValidationSet.
+// It iterates over the options in the set and applies validation using the
+// provided context and the general OptionSet.
+// If validation fails for any option, the function returns the respective error.
+// This function is intended to be used by Validation method in some Options
+// object requiring to forward Validation to a nested OptionSet.
+// Note: If an object implements a Validation method, it is also responsible to handle nested options.
+func (s ValidationSet) ValidateSet(ctx context.Context, opts OptionSet, set OptionSetProvider) error {
+	if v, ok := set.(Validatable); ok {
+		err := v.Validate(ctx, opts, s)
+		if err != nil {
+			return err
+		}
+	} else {
+		for o := range set.AsOptionSet().Options {
+			err := s.Validate(ctx, opts, o)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -100,6 +126,31 @@ func (s FinalizationSet) Finalize(ctx context.Context, opts OptionSet, o any) er
 		if !set.Set[Finalizable](s).Has(v) {
 			set.Set[Finalizable](s).Add(v)
 			return v.Finalize(ctx, opts, s)
+		}
+	}
+	return nil
+}
+
+// FinalizeSet finalizes the OptionSet given by the OptionSetProvider against a
+// more general OptionSet using the provided FinalizationSet.
+// It iterates over the options in the set and applies validation using the
+// provided context and the general OptionSet.
+// If validation fails for any option, the function returns the respective error.
+// This function is intended to be used by Validation method in some Options
+// object requiring to forward Validation to a nested OptionSet.
+// Note: If an object implements a Finalize method, it is also responsible to handle nested options.
+func (s FinalizationSet) FinalizeSet(ctx context.Context, opts OptionSet, set OptionSetProvider) error {
+	if v, ok := set.(Finalizable); ok {
+		err := v.Finalize(ctx, opts, s)
+		if err != nil {
+			return err
+		}
+	} else {
+		for o := range iterutils.Reverse(set.AsOptionSet().Options) {
+			err := s.Finalize(ctx, opts, o)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil

@@ -3,7 +3,6 @@ package flagutils
 import (
 	"context"
 	"github.com/mandelsoft/goutils/errors"
-	"github.com/mandelsoft/goutils/iterutils"
 	"github.com/spf13/pflag"
 	"reflect"
 )
@@ -192,14 +191,7 @@ func Validate(ctx context.Context, set OptionSetProvider, val ValidationSet) err
 			return err
 		}
 	} else {
-		for o := range base.Options {
-			if v, ok := o.(Validatable); ok {
-				err := v.Validate(ctx, base, val)
-				if err != nil {
-					return err
-				}
-			}
-		}
+		return val.ValidateSet(ctx, base, base)
 	}
 	return nil
 }
@@ -211,21 +203,5 @@ func Finalize(ctx context.Context, set OptionSetProvider, val FinalizationSet) e
 	if val == nil {
 		val = FinalizationSet{}
 	}
-	base := set.AsOptionSet()
-	if v, ok := set.(Finalizable); ok {
-		err := v.Finalize(ctx, base, val)
-		if err != nil {
-			return err
-		}
-	} else {
-		for o := range iterutils.Reverse(base.Options) {
-			if v, ok := o.(Finalizable); ok {
-				err := v.Finalize(ctx, base, val)
-				if err != nil {
-					return err
-				}
-			}
-		}
-	}
-	return nil
+	return val.FinalizeSet(ctx, set.AsOptionSet(), set)
 }
