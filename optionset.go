@@ -2,8 +2,6 @@ package flagutils
 
 import (
 	"context"
-	"github.com/mandelsoft/goutils/errors"
-	"github.com/spf13/pflag"
 	"reflect"
 )
 
@@ -23,73 +21,6 @@ type OptionSet interface {
 type ExtendableOptionSet interface {
 	OptionSet
 	Add(o ...Options) ExtendableOptionSet
-}
-
-// DefaultOptionSet defines a slice of Options, representing a basic
-// implementation of an OptionSet.
-type DefaultOptionSet []Options
-
-var (
-	_ Validatable = DefaultOptionSet(nil)
-	_ Finalizable = DefaultOptionSet(nil)
-)
-
-func (s DefaultOptionSet) AsOptionSet() OptionSet {
-	return s
-}
-
-var _ ExtendableOptionSet = (*DefaultOptionSet)(nil)
-
-func (s *DefaultOptionSet) Add(o ...Options) ExtendableOptionSet {
-	*s = append(*s, o...)
-	return s
-}
-
-func (s DefaultOptionSet) AddFlags(fs *pflag.FlagSet) {
-	for _, o := range s {
-		o.AddFlags(fs)
-	}
-}
-
-func (s DefaultOptionSet) Options(yield func(Options) bool) {
-	for _, o := range s {
-		if !yield(o) {
-			return
-		}
-	}
-}
-
-func (s DefaultOptionSet) Usage() string {
-	u := ""
-	for _, n := range s {
-		if c, ok := n.(Usage); ok {
-			u += c.Usage()
-		}
-	}
-	return u
-}
-
-func (s DefaultOptionSet) Validate(ctx context.Context, opts OptionSet, v ValidationSet) error {
-	var err error
-	if opts == nil {
-		opts = s
-	}
-	for _, o := range s {
-		err = errors.Join(err, v.Validate(ctx, opts, o))
-	}
-	return err
-}
-
-func (s DefaultOptionSet) Finalize(ctx context.Context, opts OptionSet, v FinalizationSet) error {
-	var err error
-	if opts == nil {
-		opts = s
-	}
-	for i := range s {
-		o := s[len(s)-1-i]
-		err = errors.Join(err, v.Finalize(ctx, opts, o))
-	}
-	return err
 }
 
 ////////////////////////////////////////////////////////////////////////////////

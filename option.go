@@ -46,6 +46,10 @@ func (s ValidationSet) Validate(ctx context.Context, opts OptionSet, o any) erro
 			set.Set[Validatable](s).Add(v)
 			return v.Validate(ctx, opts, s)
 		}
+	} else {
+		if sub, ok := o.(OptionSetProvider); ok {
+			return s.ValidateSet(ctx, opts, sub)
+		}
 	}
 	return nil
 }

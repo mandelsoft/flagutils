@@ -15,8 +15,10 @@ type Interface interface {
 }
 
 type TestOption struct {
-	Flag bool
-	Err  error
+	Validated bool
+	Finalized bool
+	Flag      bool
+	Err       error
 }
 
 func (t *TestOption) Get() bool {
@@ -28,6 +30,15 @@ func (t *TestOption) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (t *TestOption) Validate(ctx context.Context, opts flagutils.OptionSet, v flagutils.ValidationSet) error {
+	t.Validated = true
+	if t.Flag {
+		return t.Err
+	}
+	return nil
+}
+
+func (t *TestOption) Finalize(ctx context.Context, opts flagutils.OptionSet, v flagutils.FinalizationSet) error {
+	t.Finalized = true
 	if t.Flag {
 		return t.Err
 	}
