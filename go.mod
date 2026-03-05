@@ -3,28 +3,34 @@ module github.com/mandelsoft/flagutils
 go 1.25.0
 
 require (
-	github.com/mandelsoft/goutils v0.0.0-20251108170156-7404c5a2417e
+	github.com/Masterminds/semver/v3 v3.4.0
+	github.com/mandelsoft/filepath v0.0.0-20240223090642-3e2777258aa3
+	github.com/mandelsoft/goutils v0.0.0-20260226120828-1ef06f3d9aa1
 	github.com/mandelsoft/streaming v0.0.0-20251105135223-ffdd77f8fe2e
+	github.com/modern-go/reflect2 v1.0.2
 	github.com/onsi/ginkgo/v2 v2.26.0
 	github.com/onsi/gomega v1.38.2
 	github.com/spf13/pflag v1.0.10
 	go.yaml.in/yaml/v3 v3.0.4
+	sigs.k8s.io/yaml v1.6.0
 )
 
 require (
-	github.com/Masterminds/semver/v3 v3.4.0 // indirect
+	github.com/drone/envsubst v1.0.3 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
+	github.com/go-test/deep v1.1.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/pprof v0.0.0-20251007162407-5df77e3f7d1d // indirect
 	github.com/gowebpki/jcs v1.0.1 // indirect
 	github.com/mandelsoft/logging v0.0.0-20240618075559-fdca28a87b0a // indirect
+	github.com/mandelsoft/vfs v0.4.5-0.20250514111339-d7b067920e91 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
+	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	golang.org/x/mod v0.29.0 // indirect
 	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect

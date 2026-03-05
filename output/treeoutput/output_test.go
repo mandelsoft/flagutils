@@ -3,6 +3,7 @@ package treeoutput_test
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/mandelsoft/flagutils"
@@ -53,19 +54,46 @@ var _ = Describe("Tree Output", func() {
 			out := output.From[*files.Element](opts)
 			n := Must(out.GetOutput().Process(ctx, args, files.NewSourceFactory(opts)))
 			Expect(n).To(Equal(10))
-			Expect(outp.String()).To(StringEqualTrimmedWithContext(`
+
+			exp := `
             MODE       NAME   SIZE ERROR
-├─                     output      GetFileAttributesEx output: The system cannot find the file specified.
-└─ ⊗        drwxrwxrwx test      0 
-   ├─       -rw-rw-rw- a         5 
-   ├─       -rw-rw-rw- b         3 
-   └─ ⊗     drwxrwxrwx dir       0 
-      ├─    -rw-rw-rw- a         5 
-      ├─    -rw-rw-rw- c         6 
-      └─ ⊗  drwxrwxrwx sub       0 
-         ├─ -rw-rw-rw- d         6 
-         └─ -rw-rw-rw- e         3 
-`))
+├─                     output      .*file.*
+└─ ⊗        drwxrwxr.x test   *\d+ 
+   ├─       -rw-rw-r.- a         5 
+   ├─       -rw-rw-r.- b         3 
+   └─ ⊗     drwxrwxr.x dir    *\d+ 
+      ├─    -rw-rw-r.- a         5 
+      ├─    -rw-rw-r.- c         6 
+      └─ ⊗  drwxrwxr.x sub    *\d+ 
+         ├─ -rw-rw-r.- d         6 
+         └─ -rw-rw-r.- e         3 
+`
+			Expect(outp.String()).To(StringMatchTrimmedWithContext(exp))
 		})
 	})
 })
+
+func compareRunes(a, b string) string {
+	line := 1
+	s := ""
+	ra, rb := []rune(a), []rune(b)
+	for i := range ra {
+		if ra[i] == '\n' {
+			line++
+			s = ""
+		} else {
+			s += string(ra[i])
+		}
+		if len(rb) < i {
+			return fmt.Sprintf("additional rune %c", ra)
+		} else {
+			if ra[i] != rb[i] {
+				return fmt.Sprintf("different rune %c (expected %c) (line %d: %s)", ra[i], rb[i], line, s)
+			}
+		}
+	}
+	if len(ra) < len(rb) {
+		return fmt.Sprintf("missing rune %c", rb[len(ra)])
+	}
+	return ""
+}

@@ -1,14 +1,20 @@
 # Command Line Utility Library
 
-This library provides two support frameworks
+This library provides three support frameworks related to commmand line options
 - Handling of Option Sets
 - Handling of list-based command output using the [streaming library](https://github.com/mandelsoft/streaming).
+- Configuring implementation variants by potentially overlapping sets 
+  of command line options.
 
 Under the folder `examples` you can find two complete examples 
 describing how to use both library parts in combination:
 
 - [Listing of files](examples/files)
 - [Simple Graph Traversal](examples/graph)
+- [Object Configuration](examples/flagsets)
+
+Additionally, the package [pflags](pflags) provides additional technical flag types
+to be used together with the [pflag package](https://github.com/spf13/pflag)
 
 ## Option Sets
 
@@ -453,3 +459,22 @@ An output of a table output could look like this:
       └─    d    david  
 processed 11 nodes
 ```
+
+## Object Configuration
+
+The package [flagset](flagsets) offers a more flexible handling for correlated sets of options.
+It introduces `OptionType`s, which represent a particular kind of Option with a name a description and a technical type according to the [pflag](https://github.com/spf13/pflag) flag types. Hereby, they represent a particular meaning on top of the pure technical type.
+
+Such types can then be composed to `OptionTypeSet`s representing a set of correlated options, for example options used for a dedicated purpose. Such sets can dynamically provide an `OptionSet` consisting of `Option` object and can be added to a `pflag.FlagSet`, similar to technical options.
+
+Composing such sets can use overlapping `OptionsSet`s again, which is not possible for a `pflag.FlagSet`. It is possible, because the effectice option set is only created after the composition
+is done and shared options are deduplicated.
+
+A more high-level `TypedOptionSetConfigProvider` is introduced, which uses a separate type option to
+specify the selection of a variant described by nested sets.
+
+After evaluation of concrete command line options a consistent set of options for the selected
+variant is provided, which is mapped to a Config object describing the setting for the selected object type. Hereby, consistency checks are done, to notify about invalid option combinations.
+
+A complete example can be found in [examples/flagsets](examples/flagsets/usage.go). It uses a simple
+Scheme` type to describe the variants and bundles the features of the flagsets package.
