@@ -1,7 +1,6 @@
 package flagutils
 
 import (
-	"context"
 	"reflect"
 )
 
@@ -12,6 +11,17 @@ type OptionSetProvider interface {
 
 // OptionSet is an interface representing a set of Options. It acts as Options and OptionSetProvider
 // and provides a method to iterate over nested Options.
+// There is an intended lifecycle for an OptionSet:
+//   - Composition of the set
+//   - Preparation using Prepare and a PreparationSet to complete the option definition incorporation other
+//     options of the final OptionSet.
+//   - Apply to pflag.FlagSet
+//   - Evaluate on current command line options.
+//   - Validation using Validate and a ValidationSet to validate the settings and prepare some state usable by
+//     the intended application.
+//   - (Run the application using the options (potetially with the From calls from various options to retrieve
+//     them from the OptionSet.
+//   - Finalization using Finalize and a FinalizationSet to cleanup temporary state build during Validation.
 type OptionSet interface {
 	Options
 	OptionSetProvider
@@ -106,33 +116,4 @@ func Filter[T any](set OptionSetProvider) []T {
 	var result []T
 	filter[T](set, &result)
 	return result
-}
-
-// Validate checks whether the provided OptionSetProvider or its nested options
-// implement the Validatable interface and validates them.
-// It returns an error if any validation fails or nil if all validations succeed.
-func Validate(ctx context.Context, set OptionSetProvider, val ValidationSet) error {
-	if val == nil {
-		val = ValidationSet{}
-	}
-	base := set.AsOptionSet()
-	if v, ok := set.(Validatable); ok {
-		err := v.Validate(ctx, base, val)
-		if err != nil {
-			return err
-		}
-	} else {
-		return val.ValidateSet(ctx, base, base)
-	}
-	return nil
-}
-
-// Finalize checks whether the provided OptionSetProvider or its nested options
-// implement the Finalizable interface and finalizes them.
-// It returns an error if any finalization fails or nil if all finalizations succeed.
-func Finalize(ctx context.Context, set OptionSetProvider, val FinalizationSet) error {
-	if val == nil {
-		val = FinalizationSet{}
-	}
-	return val.FinalizeSet(ctx, set.AsOptionSet(), set)
 }
