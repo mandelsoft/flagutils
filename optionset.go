@@ -164,3 +164,17 @@ func Assure[T Options](opts OptionSet, f func() T, check ...matcher.Matcher[T]) 
 	}
 	return fmt.Errorf("option set must implement flagutils.ExtendableOptionSet")
 }
+
+func SetAssured[T Options](tgt *T, opts OptionSet, f func() T, check ...matcher.Matcher[T]) error {
+	list := Filter[T](opts, check...)
+	if len(list) > 0 {
+		*tgt = list[0]
+		return nil
+	}
+	if m, ok := opts.(ExtendableOptionSet); ok {
+		*tgt = f()
+		m.Add(*tgt)
+		return nil
+	}
+	return fmt.Errorf("option set must implement flagutils.ExtendableOptionSet")
+}
