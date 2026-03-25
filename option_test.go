@@ -3,6 +3,7 @@ package flagutils_test
 import (
 	"context"
 	"fmt"
+
 	"github.com/mandelsoft/flagutils"
 	"github.com/spf13/pflag"
 
@@ -83,10 +84,10 @@ type SetOption struct {
 var _ flagutils.Options = (*TestOption)(nil)
 
 var _ = Describe("options", func() {
-	var set flagutils.DefaultOptionSet
+	var set flagutils.ExtendableOptionSet
 
 	BeforeEach(func() {
-		set = nil
+		set = flagutils.NewOptionSet()
 	})
 
 	Context("simple option", func() {

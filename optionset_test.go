@@ -2,6 +2,7 @@ package flagutils_test
 
 import (
 	"context"
+
 	"github.com/mandelsoft/flagutils"
 	"github.com/spf13/pflag"
 
@@ -39,10 +40,10 @@ func (n *nesting) Special() {
 }
 
 var _ = Describe("options", func() {
-	var set flagutils.DefaultOptionSet
+	var set flagutils.ExtendableOptionSet
 
 	BeforeEach(func() {
-		set = nil
+		set = flagutils.NewOptionSet()
 	})
 
 	Context("option set", func() {

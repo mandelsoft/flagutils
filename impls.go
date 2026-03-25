@@ -20,57 +20,69 @@ func (s *SetBasedOptions) AddFlags(fs *pflag.FlagSet) {
 	s.set.AddFlags(fs)
 }
 
+func (s *SetBasedOptions) Options(yield func(Options) bool) {
+	s.set.Options(yield)
+}
+
 func (s *SetBasedOptions) Add(o ...Options) OptionSet {
 	s.set.Add(o...)
-	return s.set
+	return s
 }
 
 func (s *SetBasedOptions) AsOptionSet() OptionSet {
-	return s.set
+	return &s.set
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 // DefaultOptionSet defines a slice of Options, representing a basic
 // implementation of an OptionSet.
+// Use it as pointer or use NewOptionSet.
 type DefaultOptionSet []Options
 
+// NewOptionSet creates a new ExtendableOptionSet.
 func NewOptionSet(opts ...Options) ExtendableOptionSet {
 	return (&DefaultOptionSet{}).Add(opts...)
 }
 
 var _ ExtendableOptionSet = (*DefaultOptionSet)(nil)
 
-func (s DefaultOptionSet) AsOptionSet() OptionSet {
-	return &s
+func (s *DefaultOptionSet) AsOptionSet() OptionSet {
+	return s
 }
-
-var _ ExtendableOptionSet = (*DefaultOptionSet)(nil)
 
 func (s *DefaultOptionSet) Add(o ...Options) ExtendableOptionSet {
 	*s = append(*s, o...)
 	return s
 }
 
-func (s DefaultOptionSet) AddFlags(fs *pflag.FlagSet) {
-	for _, o := range s {
+func (s *DefaultOptionSet) AddFlags(fs *pflag.FlagSet) {
+	if s == nil {
+		return
+	}
+	for _, o := range *s {
 		o.AddFlags(fs)
 	}
 }
 
-func (s DefaultOptionSet) Options(yield func(Options) bool) {
-	for _, o := range s {
+func (s *DefaultOptionSet) Options(yield func(Options) bool) {
+	if s == nil {
+		return
+	}
+	for _, o := range *s {
 		if !yield(o) {
 			return
 		}
 	}
 }
 
-func (s DefaultOptionSet) Usage() string {
+func (s *DefaultOptionSet) Usage() string {
 	u := ""
-	for _, n := range s {
-		if c, ok := n.(Usage); ok {
-			u += c.Usage()
+	if s != nil {
+		for _, n := range *s {
+			if c, ok := n.(Usage); ok {
+				u += c.Usage()
+			}
 		}
 	}
 	return u

@@ -119,7 +119,7 @@ func (o *O4) AddFlags(flag *pflag.FlagSet) {
 }
 
 func (o *O4) AsOptionSet() flagutils.OptionSet {
-	return o.DefaultOptionSet
+	return &o.DefaultOptionSet
 }
 
 func (o *O4) Prepare(ctx context.Context, opts flagutils.OptionSet, v flagutils.PreparationSet) error {
@@ -139,12 +139,12 @@ func (o *O4) Finalize(ctx context.Context, opts flagutils.OptionSet, v flagutils
 }
 
 var _ = Describe("Lifecycle Test Environment", func() {
-	var set flagutils.DefaultOptionSet
+	var set flagutils.ExtendableOptionSet
 	var ctx context.Context
 
 	BeforeEach(func() {
 		ctx = withCounter(context.Background())
-		set = flagutils.DefaultOptionSet{}
+		set = flagutils.NewOptionSet()
 		set.Add(&O2{})
 		set.Add(newO4())
 		set.Add(&O1{})

@@ -2,6 +2,7 @@ package flagutils_test
 
 import (
 	"context"
+
 	"github.com/mandelsoft/flagutils"
 	. "github.com/mandelsoft/goutils/testutils"
 	. "github.com/onsi/ginkgo/v2"
@@ -13,7 +14,7 @@ var _ = Describe("traversing", func() {
 
 	Context("simple option", func() {
 		It("default option set", func() {
-			set := flagutils.DefaultOptionSet{}
+			set := flagutils.NewOptionSet()
 			set.Add(flagutils.NoOptions{})
 			set.Add(&TestOption{})
 

@@ -1,6 +1,8 @@
 package flagutils
 
-import "github.com/mandelsoft/goutils/sliceutils"
+import (
+	"github.com/mandelsoft/goutils/iterutils"
+)
 
 type OptionSelector func(Options) bool
 
@@ -53,7 +55,7 @@ func Implements[T any](o Options) bool {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-func Select(set OptionSet, sel OptionSelector) DefaultOptionSet {
+func Select(set OptionSet, sel OptionSelector) ExtendableOptionSet {
 	var result DefaultOptionSet
 
 	if o, ok := set.(Options); ok {
@@ -63,17 +65,16 @@ func Select(set OptionSet, sel OptionSelector) DefaultOptionSet {
 	}
 	for o := range set.Options {
 		if s, ok := o.(OptionSet); ok {
-			result = append(result, Select(s, sel))
+			result.Add(Select(s, sel))
 		} else {
 			if sel(o) {
-				result = append(result, o)
+				result.Add(o)
 			}
 		}
 	}
-	return result
+	return &result
 }
 
 func SelectByInterface[T any](set OptionSet, sel ...OptionSelector) []T {
-	r := Select(set, And(Implements[T], And(sel...)))
-	return sliceutils.Convert[T](r)
+	return iterutils.Get(iterutils.Convert[T](Select(set, And(Implements[T], And(sel...))).Options))
 }

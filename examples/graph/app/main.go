@@ -22,7 +22,7 @@ func Error(msg string, args ...interface{}) {
 
 func main() {
 	ctx := context.Background()
-	opts := flagutils.DefaultOptionSet{}
+	opts := &flagutils.DefaultOptionSet{}
 	opts.Add(
 		closure.NewByFactory[*graph.Element](graph.ClosureFactory),
 		sort.New(),

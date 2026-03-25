@@ -23,14 +23,14 @@ import (
 
 var _ = Describe("Tree Output", func() {
 	var ctx context.Context
-	var opts flagutils.DefaultOptionSet
+	var opts flagutils.ExtendableOptionSet
 	var fs *pflag.FlagSet
 	var outp *bytes.Buffer
 
 	BeforeEach(func() {
 		outp = bytes.NewBuffer(nil)
 		ctx = out.With(context.Background(), out.New(outp, os.Stderr))
-		opts = flagutils.DefaultOptionSet{}
+		opts = flagutils.NewOptionSet()
 		opts.Add(
 			files.New(),
 			closure.NewByFactory[*files.Element](files.ClosureFactory),
