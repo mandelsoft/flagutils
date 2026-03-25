@@ -1,7 +1,10 @@
 package flagutils
 
 import (
+	"fmt"
 	"reflect"
+
+	"github.com/mandelsoft/goutils/matcher"
 )
 
 // OptionSetProvider defines an interface for types capable of providing an OptionSet by implementing the AsOptionSet method.
@@ -94,7 +97,34 @@ func GetFrom[T any](set OptionSetProvider) T {
 	return r
 }
 
-func filter[T any](set OptionSetProvider, result *[]T) {
+func GetFrom2[T any](set OptionSetProvider) (T, bool) {
+	var r T
+	ok := RetrieveFrom(set, &r)
+	return r, ok
+}
+
+// GetFilteredFrom is like GetFrom, but uses an instance filter
+// to select an instance for a type supporting different instance specific
+// flag names.
+func GetFilteredFrom[T any](set OptionSetProvider, filter matcher.Matcher[T]) T {
+	var _nil T
+	list := Filter[T](set, filter)
+	if len(list) == 0 {
+		return _nil
+	}
+	return list[0]
+}
+
+func GetFilteredFrom2[T any](set OptionSetProvider, filter matcher.Matcher[T]) (T, bool) {
+	var _nil T
+	list := Filter[T](set, filter)
+	if len(list) == 0 {
+		return _nil, false
+	}
+	return list[0], true
+}
+
+func filter[T any](set OptionSetProvider, result *[]T, check matcher.Matcher[T]) {
 	if o, ok := set.(Options); ok {
 		if v, ok := o.(T); ok {
 			*result = append(*result, v)
@@ -102,9 +132,9 @@ func filter[T any](set OptionSetProvider, result *[]T) {
 	}
 	for o := range set.AsOptionSet().Options {
 		if v, ok := o.(OptionSetProvider); ok {
-			filter[T](v, result)
+			filter[T](v, result, check)
 		} else {
-			if v, ok := o.(T); ok {
+			if v, ok := o.(T); ok && check(v) {
 				*result = append(*result, v)
 			}
 		}
@@ -112,8 +142,25 @@ func filter[T any](set OptionSetProvider, result *[]T) {
 }
 
 // Filter extracts elements of type T from the provided OptionSetProvider and returns them as a slice of T.
-func Filter[T any](set OptionSetProvider) []T {
+// An optional matcher can be used to additionally filter the result.
+func Filter[T any](set OptionSetProvider, check ...matcher.Matcher[T]) []T {
 	var result []T
-	filter[T](set, &result)
+	filter[T](set, &result, matcher.And(check...))
 	return result
+}
+
+// Assure expects an ExtendableOptionSet and adds an options object
+// provided by a factory method, if it is not yet present.
+// Optional matchers can be used to apply additional filters,
+// for example an instance filter for types applicable for different option names.
+func Assure[T Options](opts OptionSet, f func() T, check ...matcher.Matcher[T]) error {
+	list := Filter[T](opts, check...)
+	if len(list) > 0 {
+		return nil
+	}
+	if m, ok := opts.(ExtendableOptionSet); ok {
+		m.Add(f())
+		return nil
+	}
+	return fmt.Errorf("option set must implement flagutils.ExtendableOptionSet")
 }

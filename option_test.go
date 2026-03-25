@@ -3,6 +3,7 @@ package flagutils_test
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/mandelsoft/flagutils"
 	"github.com/spf13/pflag"
@@ -20,6 +21,11 @@ type TestOption struct {
 	Finalized bool
 	Flag      bool
 	Err       error
+	Mode      string
+}
+
+func NewTestOption(mode ...string) func() *TestOption {
+	return func() *TestOption { return &TestOption{Mode: strings.Join(mode, "")} }
 }
 
 func (t *TestOption) Get() bool {
@@ -27,7 +33,11 @@ func (t *TestOption) Get() bool {
 }
 
 func (t *TestOption) AddFlags(fs *pflag.FlagSet) {
-	fs.BoolVarP(&t.Flag, "test", "t", false, "test flag")
+	name := "test"
+	if t.Mode != "" {
+		name = t.Mode
+	}
+	fs.BoolVarP(&t.Flag, name, name[0:1], false, "test flag")
 }
 
 func (t *TestOption) Validate(ctx context.Context, opts flagutils.OptionSet, v flagutils.ValidationSet) error {

@@ -2,8 +2,10 @@ package flagutils_test
 
 import (
 	"context"
+	"strings"
 
 	"github.com/mandelsoft/flagutils"
+	"github.com/mandelsoft/goutils/iterutils"
 	"github.com/spf13/pflag"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -66,4 +68,41 @@ var _ = Describe("options", func() {
 			Expect(opt).NotTo(BeNil())
 		})
 	})
+
+	Context("assure", func() {
+		It("adds", func() {
+			flagutils.Assure(set, NewTestOption())
+			Expect(len(iterutils.Get(set.Options))).To(Equal(1))
+			Expect(flagutils.GetFrom[*TestOption](set)).NotTo(BeNil())
+		})
+
+		It("keeps", func() {
+			set.Add(NewTestOption()())
+			flagutils.Assure(set, NewTestOption())
+			Expect(len(iterutils.Get(set.Options))).To(Equal(1))
+			Expect(flagutils.GetFrom[*TestOption](set)).NotTo(BeNil())
+		})
+
+		It("adds filtered", func() {
+			set.Add(NewTestOption("one")())
+			flagutils.Assure(set, NewTestOption("two"), check("two"))
+			Expect(len(iterutils.Get(set.Options))).To(Equal(2))
+			Expect(flagutils.Filter[*TestOption](set, check("two"))).NotTo(BeNil())
+			Expect(flagutils.Filter[*TestOption](set, check("one"))).NotTo(BeNil())
+		})
+
+		It("keeps filtered", func() {
+			set.Add(NewTestOption("one")())
+			flagutils.Assure(set, NewTestOption("one"), check("one"))
+			Expect(len(iterutils.Get(set.Options))).To(Equal(1))
+			Expect(flagutils.Filter[*TestOption](set, check("one"))).NotTo(BeNil())
+		})
+	})
 })
+
+func check(mode ...string) func(o *TestOption) bool {
+	m := strings.Join(mode, "")
+	return func(o *TestOption) bool {
+		return o.Mode == m
+	}
+}
