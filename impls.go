@@ -1,6 +1,8 @@
 package flagutils
 
-import "github.com/spf13/pflag"
+import (
+	"github.com/spf13/pflag"
+)
 
 type NoOptions struct{}
 
@@ -33,8 +35,14 @@ func (s *SetBasedOptions) AsOptionSet() OptionSet {
 // implementation of an OptionSet.
 type DefaultOptionSet []Options
 
+func NewOptionSet(opts ...Options) ExtendableOptionSet {
+	return (&DefaultOptionSet{}).Add(opts...)
+}
+
+var _ ExtendableOptionSet = (*DefaultOptionSet)(nil)
+
 func (s DefaultOptionSet) AsOptionSet() OptionSet {
-	return s
+	return &s
 }
 
 var _ ExtendableOptionSet = (*DefaultOptionSet)(nil)

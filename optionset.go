@@ -19,7 +19,7 @@ type OptionSetProvider interface {
 //   - Evaluate on current command line options.
 //   - Validation using Validate and a ValidationSet to validate the settings and prepare some state usable by
 //     the intended application.
-//   - (Run the application using the options (potetially with the From calls from various options to retrieve
+//   - (Run the application using the options (potentially with the From calls from various options to retrieve
 //     them from the OptionSet.
 //   - Finalization using Finalize and a FinalizationSet to cleanup temporary state build during Validation.
 type OptionSet interface {
