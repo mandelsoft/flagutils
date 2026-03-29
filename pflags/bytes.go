@@ -40,6 +40,20 @@ func newBytesBase64Value(val []byte, p *[]byte) *bytesBase64Value {
 	return (*bytesBase64Value)(p)
 }
 
+func bytesConv(sval *bytesBase64Value) ([]byte, error) {
+	return *sval, nil
+}
+
+// GetBytes return the bytes value of a flag with the given name
+func GetBytes(f *pflag.FlagSet, name string) ([]byte, error) {
+
+	val, err := getFlagType[*bytesBase64Value, []byte](f, name, "!bytesBase64", bytesConv)
+	if err != nil {
+		return nil, err
+	}
+	return val, nil
+}
+
 // BytesBase64VarP is like BytesBase64Var, but accepts a shorthand letter that can be used after a single dash.
 func BytesBase64VarP(f *pflag.FlagSet, p *[]byte, name, shorthand string, value []byte, usage string) {
 	f.VarP(newBytesBase64Value(value, p), name, shorthand, usage)

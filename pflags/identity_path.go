@@ -62,6 +62,20 @@ func (s *identityPath) GetPath() []map[string]string {
 	return *s.value
 }
 
+func identityPathConv(sval *identityPath) ([]map[string]string, error) {
+	return *sval.value, nil
+}
+
+// GetIdentityPath return the identity path value of a flag with the given name
+func GetIdentityPath(f *pflag.FlagSet, name string) ([]map[string]string, error) {
+
+	val, err := getFlagType(f, name, "{<name>=<value>}", identityPathConv)
+	if err != nil {
+		return nil, err
+	}
+	return val, nil
+}
+
 // IdentityPathVar describes a sequence of attribute sets.
 // Every sets starts with the name attribute, followed by any number of other
 // attributes until the next name attribute is given, which

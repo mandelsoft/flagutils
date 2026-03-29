@@ -34,6 +34,8 @@ var _ = Describe("identity path", func() {
 
 		Expect(flags.Parse([]string{"--flag", value1, "--flag", value2})).To(Succeed())
 		Expect(flag).To(Equal([]map[string]string{{"name": "alice", "husband": "bob"}}))
+
+		Expect(GetIdentityPath(flags, "flag")).To(Equal([]map[string]string{{"name": "alice", "husband": "bob"}}))
 	})
 
 	It("handles multi path", func() {

@@ -16,28 +16,30 @@ var _ = Describe("yaml flags", func() {
 	})
 
 	It("handles string yaml content", func() {
-		var flag LabelledValue
-		LabelledValueVarP(flags, &flag, "flag", "", LabelledValue{}, "test flag")
+		var flag LabeledValue
+		LabeledValueVarP(flags, &flag, "flag", "", LabeledValue{}, "test flag")
 
 		value := `a=b`
 
 		Expect(flags.Parse([]string{"--flag", value})).To(Succeed())
-		Expect(flag).To(Equal(LabelledValue{"a", "b"}))
+		Expect(flag).To(Equal(LabeledValue{"a", "b"}))
 	})
 
 	It("handles generic yaml content", func() {
-		var flag LabelledValue
-		LabelledValueVarP(flags, &flag, "flag", "", LabelledValue{}, "test flag")
+		var flag LabeledValue
+		LabeledValueVarP(flags, &flag, "flag", "", LabeledValue{}, "test flag")
 
 		value := `a={"a":"va"}`
 
 		Expect(flags.Parse([]string{"--flag", value})).To(Succeed())
-		Expect(flag).To(Equal(LabelledValue{"a", map[string]interface{}{"a": "va"}}))
+		Expect(flag).To(Equal(LabeledValue{"a", map[string]interface{}{"a": "va"}}))
+
+		Expect(GetLabeledValue(flags, "flag")).To(Equal(flag))
 	})
 
 	It("rejects invalid value", func() {
-		var flag LabelledValue
-		LabelledValueVarP(flags, &flag, "flag", "", LabelledValue{}, "test flag")
+		var flag LabeledValue
+		LabeledValueVarP(flags, &flag, "flag", "", LabeledValue{}, "test flag")
 
 		value := `a={"a":"va"`
 
@@ -47,8 +49,8 @@ var _ = Describe("yaml flags", func() {
 	})
 
 	It("rejects invalid assignment", func() {
-		var flag LabelledValue
-		LabelledValueVarP(flags, &flag, "flag", "", LabelledValue{}, "test flag")
+		var flag LabeledValue
+		LabeledValueVarP(flags, &flag, "flag", "", LabeledValue{}, "test flag")
 
 		value := `a`
 

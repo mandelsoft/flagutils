@@ -15,18 +15,18 @@ var _ = Describe("yaml flags", func() {
 	})
 
 	It("handles generic yaml content", func() {
-		var flag LabelledString
-		LabelledStringVarP(flags, &flag, "flag", "", LabelledString{}, "test flag")
+		var flag LabeledString
+		LabeledStringVarP(flags, &flag, "flag", "", LabeledString{}, "test flag")
 
 		value := `a=b`
 
 		Expect(flags.Parse([]string{"--flag", value})).To(Succeed())
-		Expect(flag).To(Equal(LabelledString{"a", "b"}))
+		Expect(flag).To(Equal(LabeledString{"a", "b"}))
 	})
 
 	It("rejects invalid assignment", func() {
-		var flag LabelledString
-		LabelledStringVarP(flags, &flag, "flag", "", LabelledString{}, "test flag")
+		var flag LabeledString
+		LabeledStringVarP(flags, &flag, "flag", "", LabeledString{}, "test flag")
 
 		value := `a`
 
