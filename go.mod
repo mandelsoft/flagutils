@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/mandelsoft/filepath v0.0.0-20240223090642-3e2777258aa3
-	github.com/mandelsoft/goutils v0.0.0-20260226120828-1ef06f3d9aa1
+	github.com/mandelsoft/goutils v0.0.0-20260407151801-9d4576be49b3
 	github.com/mandelsoft/streaming v0.0.0-20251105135223-ffdd77f8fe2e
 	github.com/modern-go/reflect2 v1.0.2
 	github.com/onsi/ginkgo/v2 v2.26.0

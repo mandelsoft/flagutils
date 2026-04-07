@@ -3,6 +3,7 @@ package flagutils
 import (
 	"context"
 
+	"github.com/mandelsoft/goutils/reflectutils"
 	"github.com/mandelsoft/goutils/set"
 	"github.com/modern-go/reflect2"
 )
@@ -24,16 +25,25 @@ type Preparable interface {
 // executed initial preparations, No error is provided for such cyclic scenarios.
 type PreparationSet set.Set[Preparable]
 
-func (s PreparationSet) Prepare(ctx context.Context, opts OptionSet, o any) error {
-	if v, ok := o.(Preparable); ok {
-		if !set.Set[Preparable](s).Has(v) {
-			set.Set[Preparable](s).Add(v)
-			return v.Prepare(ctx, opts, s)
+func (s PreparationSet) Prepare(ctx context.Context, opts OptionSet, orig any) error {
+	o := orig
+	for o != nil {
+		if v, ok := o.(Preparable); ok {
+			if !set.Set[Preparable](s).Has(v) {
+				set.Set[Preparable](s).Add(v)
+				return v.Prepare(ctx, opts, s)
+			}
+			return nil
 		}
-	} else {
-		if sub, ok := o.(OptionSetProvider); ok {
-			return s.PrepareSet(ctx, opts, sub)
+		o = reflectutils.UnwrapAny(o)
+	}
+
+	o = orig
+	for o != nil {
+		if v, ok := o.(OptionSetProvider); ok {
+			return s.PrepareSet(ctx, opts, v)
 		}
+		o = reflectutils.UnwrapAny(o)
 	}
 	return nil
 }

@@ -14,15 +14,7 @@ func Prepare(ctx context.Context, set OptionSetProvider, val PreparationSet) err
 		val = PreparationSet{}
 	}
 	base := set.AsOptionSet()
-	if v, ok := set.(Preparable); ok {
-		err := v.Prepare(ctx, base, val)
-		if err != nil {
-			return err
-		}
-	} else {
-		return val.PrepareSet(ctx, base, base)
-	}
-	return nil
+	return val.Prepare(ctx, base, base)
 }
 
 // Validate checks whether the provided OptionSetProvider or its nested options

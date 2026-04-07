@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/mandelsoft/goutils/iterutils"
+	"github.com/mandelsoft/goutils/reflectutils"
 	"github.com/mandelsoft/goutils/set"
 	"github.com/modern-go/reflect2"
 )
@@ -22,12 +23,25 @@ type Finalizable interface {
 // executed initial finalizations, No error is provided for such cyclic scenarios.
 type FinalizationSet set.Set[Finalizable]
 
-func (s FinalizationSet) Finalize(ctx context.Context, opts OptionSet, o any) error {
-	if v, ok := o.(Finalizable); ok {
-		if !set.Set[Finalizable](s).Has(v) {
-			set.Set[Finalizable](s).Add(v)
-			return v.Finalize(ctx, opts, s)
+func (s FinalizationSet) Finalize(ctx context.Context, opts OptionSet, orig any) error {
+	o := orig
+	for o != nil {
+		if v, ok := o.(Finalizable); ok {
+			if !set.Set[Finalizable](s).Has(v) {
+				set.Set[Finalizable](s).Add(v)
+				return v.Finalize(ctx, opts, s)
+			}
+			return nil
 		}
+		o = reflectutils.UnwrapAny(o)
+	}
+
+	o = orig
+	for o != nil {
+		if v, ok := o.(OptionSetProvider); ok {
+			return s.FinalizeSet(ctx, opts, v)
+		}
+		o = reflectutils.UnwrapAny(o)
 	}
 	return nil
 }
