@@ -1,6 +1,11 @@
 package flagutils
 
-import "context"
+import (
+	"context"
+
+	"github.com/mandelsoft/goutils/errors"
+	"github.com/spf13/pflag"
+)
 
 // Prepare checks whether the provided OptionSetProvider or its nested options
 // implement the Preparable interface and prepares them.
@@ -44,4 +49,32 @@ func Finalize(ctx context.Context, set OptionSetProvider, val FinalizationSet) e
 		val = FinalizationSet{}
 	}
 	return val.FinalizeSet(ctx, set.AsOptionSet(), set)
+}
+
+// Runner is the interface used to run an aplication based on an option lifecycle management.
+type Runner interface {
+	Run(ctx context.Context, options OptionSet) error
+}
+
+// ExecuteLifecycle is a default lifecycle executor based on a Runner used to
+// run the application in the run phase.
+func ExecuteLifecycle(ctx context.Context, name string, options OptionSetProvider, run Runner, args ...string) error {
+	fs := pflag.NewFlagSet(name, pflag.ContinueOnError)
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	opts := options.AsOptionSet()
+	if err := Prepare(ctx, opts, nil); err != nil {
+		return err
+	}
+	opts.AddFlags(fs)
+
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if err := Validate(ctx, opts, nil); err != nil {
+		return err
+	}
+	return errors.Join(run.Run(ctx, opts), Finalize(ctx, opts, nil))
 }

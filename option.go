@@ -3,6 +3,7 @@ package flagutils
 import (
 	"context"
 
+	"github.com/mandelsoft/goutils/generics"
 	"github.com/mandelsoft/goutils/matcher"
 	"github.com/spf13/pflag"
 )
@@ -29,8 +30,9 @@ type OptionsRef[T Options] struct {
 }
 
 var (
-	_ Options    = (*OptionsRef[Options])(nil)
-	_ Preparable = (*OptionsRef[Options])(nil)
+	_ Options                       = (*OptionsRef[Options])(nil)
+	_ Preparable                    = (*OptionsRef[Options])(nil)
+	_ generics.Unwrappable[Options] = (*OptionsRef[Options])(nil)
 )
 
 // NewOptionsRef creates a new dynamic reference to Options
@@ -48,4 +50,18 @@ func (o *OptionsRef[T]) AddFlags(fs *pflag.FlagSet) {
 
 func (o *OptionsRef[T]) Prepare(ctx context.Context, opts OptionSet, v PreparationSet) error {
 	return SetAssured(&o.Options, opts, o.factory, o.matcher)
+}
+
+func (o *OptionsRef[T]) Unwrap() Options {
+	return o.Options
+}
+
+func Unwrap(o Options) Options {
+	for {
+		if u, ok := o.(generics.Unwrappable[Options]); ok {
+			o = u.Unwrap()
+		} else {
+			return o
+		}
+	}
 }
