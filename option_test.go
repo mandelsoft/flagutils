@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/mandelsoft/flagutils"
+	. "github.com/mandelsoft/goutils/testutils"
 	"github.com/spf13/pflag"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -269,6 +270,28 @@ var _ = Describe("options", func() {
 
 			Expect(flagutils.Validate(context.Background(), set, nil)).To(Succeed())
 			Expect(flagutils.GetFrom[*Test2Option](set).Propgated).To(BeFalse())
+		})
+	})
+
+	Context("option refs", func() {
+		var fs *pflag.FlagSet
+
+		BeforeEach(func() {
+			fs = pflag.NewFlagSet("test", pflag.ContinueOnError)
+		})
+
+		It("", func() {
+			ref1 := flagutils.NewDefaultOptionsRef[*TestOption]()
+			ref2 := flagutils.NewDefaultOptionsRef[*TestOption]()
+
+			set.Add(ref1, ref2)
+			MustBeSuccessful(flagutils.Prepare(context.Background(), set, nil))
+			set.AddFlags(fs)
+
+			MustBeSuccessful(fs.Parse([]string{"--test"}))
+
+			Expect(ref1.Options.Flag).To(BeTrue())
+			Expect(ref2.Options.Flag).To(BeTrue())
 		})
 	})
 })

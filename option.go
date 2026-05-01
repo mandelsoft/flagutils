@@ -43,6 +43,11 @@ func NewOptionsRef[T Options](f func() T, check ...matcher.Matcher[T]) *OptionsR
 	return &OptionsRef[T]{factory: f, matcher: matcher.And(check...)}
 }
 
+// NewDefaultOptionsRef like NewOptionsRef, but uses standard object creation.
+func NewDefaultOptionsRef[T Options](check ...matcher.Matcher[T]) *OptionsRef[T] {
+	return NewOptionsRef[T](generics.ObjectFor[T], check...)
+}
+
 func (o *OptionsRef[T]) AddFlags(fs *pflag.FlagSet) {
 	// just a marker method
 	// Option settings are deferred ro assured options.
